@@ -152,14 +152,31 @@ function extractResults(htmlSnippet: string): { numeros: string[], letras: strin
     const numeros: string[] = [];
     const letras: string[] = [];
     
-    $('.infoJuego td > div:not(.pos):not(.letras)').each((_, el) => {
-        const t = $(el).text().trim();
-        if (t.length === 4) numeros.push(t);
-    });
-    
-    $('.infoJuego .letras').each((_, el) => {
-        const t = $(el).text().trim();
-        if (t.length > 0) letras.push(t);
+    // Estrategia más robusta: buscar TODOS los divs dentro de .infoJuego
+    $('.infoJuego td div').each((_, el) => {
+        const text = $(el).text().trim();
+        const classes = $(el).attr('class') || '';
+        
+        // Ignorar divs con clase 'pos' (posiciones)
+        if (classes.includes('pos')) return;
+        
+        // Si tiene clase 'letras' o el texto no son 4 dígitos exactos, es una letra
+        if (classes.includes('letras') || (text.length > 0 && !/^\d{4}$/.test(text))) {
+            // Extraer solo las letras individuales (ej: "EKRX" → ['E','K','R','X'])
+            if (text.length > 0 && /^[A-Z]+$/.test(text)) {
+                for (const letra of text) {
+                    if (letra !== ' ' && letra !== '-') {
+                        letras.push(letra);
+                    }
+                }
+            }
+            return;
+        }
+        
+        // Es un número de 4 dígitos
+        if (/^\d{4}$/.test(text)) {
+            numeros.push(text);
+        }
     });
     
     return { numeros, letras };
