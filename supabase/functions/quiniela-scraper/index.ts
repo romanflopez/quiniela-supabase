@@ -79,12 +79,17 @@ async function fetchLast7DaysSorteos(): Promise<SorteoInfo[]> {
         const sorteos: SorteoInfo[] = [];
         const cutoffDate = getDateDaysAgo(7);
         
-        $('#valor3 option').each((_, el) => {
+        console.log(`🔍 Buscando sorteos desde: ${cutoffDate}`);
+        
+        let optionsFound = 0;
+        $('select#valor3 option, select[name="valor3"] option, option').each((_, el) => {
             const value = $(el).attr('value');
             const text = $(el).text();
             
-            if (value && text) {
+            if (value && text && text.includes('Sorteo')) {
+                optionsFound++;
                 const fecha = extractFecha(text);
+                
                 if (fecha && fecha >= cutoffDate) {
                     sorteos.push({
                         id: value,
@@ -95,14 +100,15 @@ async function fetchLast7DaysSorteos(): Promise<SorteoInfo[]> {
             }
         });
         
+        console.log(`📊 Options encontrados: ${optionsFound} | Sorteos últimos 7 días: ${sorteos.length}`);
         return sorteos;
     } catch (error) {
-        console.error('Error fetching sorteos:', error);
+        console.error('❌ Error fetching sorteos:', error);
         return [];
     }
 }
 
-// Obtiene solo sorteos de HOY (modo INCREMENTAL - rápido para GitHub Actions)
+// Obtiene sorteos de HOY y AYER (modo INCREMENTAL - rápido para GitHub Actions)
 async function fetchTodaysSorteos(): Promise<SorteoInfo[]> {
     try {
         const response = await fetch(LOTBA_PAGE_URL);
@@ -111,28 +117,36 @@ async function fetchTodaysSorteos(): Promise<SorteoInfo[]> {
         
         const sorteos: SorteoInfo[] = [];
         const today = getTodayDate();
+        const yesterday = getDateDaysAgo(1);
         
-        $('#valor3 option').each((_, el) => {
+        console.log(`🔍 Buscando sorteos de HOY (${today}) y AYER (${yesterday})`);
+        
+        // Buscar con varios selectores posibles
+        let optionsFound = 0;
+        $('select#valor3 option, select[name="valor3"] option, option').each((_, el) => {
             const value = $(el).attr('value');
             const text = $(el).text();
             
-            if (value && text) {
+            if (value && text && text.includes('Sorteo')) {
+                optionsFound++;
                 const fecha = extractFecha(text);
-                // Solo sorteos de HOY
-                if (fecha === today) {
+                
+                // Sorteos de HOY o AYER
+                if (fecha === today || fecha === yesterday) {
                     sorteos.push({
                         id: value,
                         fecha: fecha,
                         turno: getTurnoFromId(value)
                     });
+                    console.log(`  ✅ ${fecha} - ${value} - ${getTurnoFromId(value)}`);
                 }
             }
         });
         
-        console.log(`📅 Sorteos de HOY: ${sorteos.length} encontrados`);
+        console.log(`📊 Options encontrados: ${optionsFound} | Sorteos recientes: ${sorteos.length}`);
         return sorteos;
     } catch (error) {
-        console.error('Error fetching sorteos:', error);
+        console.error('❌ Error fetching sorteos:', error);
         return [];
     }
 }
