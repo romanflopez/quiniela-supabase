@@ -69,6 +69,7 @@ interface SorteoInfo {
     turno: string;
 }
 
+// Obtiene sorteos de los últimos 7 días (modo FULL - primera vez)
 async function fetchLast7DaysSorteos(): Promise<SorteoInfo[]> {
     try {
         const response = await fetch(LOTBA_PAGE_URL);
@@ -94,6 +95,41 @@ async function fetchLast7DaysSorteos(): Promise<SorteoInfo[]> {
             }
         });
         
+        return sorteos;
+    } catch (error) {
+        console.error('Error fetching sorteos:', error);
+        return [];
+    }
+}
+
+// Obtiene solo sorteos de HOY (modo INCREMENTAL - rápido para GitHub Actions)
+async function fetchTodaysSorteos(): Promise<SorteoInfo[]> {
+    try {
+        const response = await fetch(LOTBA_PAGE_URL);
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        
+        const sorteos: SorteoInfo[] = [];
+        const today = getTodayDate();
+        
+        $('#valor3 option').each((_, el) => {
+            const value = $(el).attr('value');
+            const text = $(el).text();
+            
+            if (value && text) {
+                const fecha = extractFecha(text);
+                // Solo sorteos de HOY
+                if (fecha === today) {
+                    sorteos.push({
+                        id: value,
+                        fecha: fecha,
+                        turno: getTurnoFromId(value)
+                    });
+                }
+            }
+        });
+        
+        console.log(`📅 Sorteos de HOY: ${sorteos.length} encontrados`);
         return sorteos;
     } catch (error) {
         console.error('Error fetching sorteos:', error);
@@ -217,7 +253,7 @@ async function saveResultToSupabase(db: any, r: QuinielaResult): Promise<void> {
     }
 }
 
-serve(async (_req) => {
+serve(async (req) => {
     const DATABASE_URL = Deno.env.get('DATABASE_URL');
     if (!DATABASE_URL) {
         return new Response(JSON.stringify({ error: "No DATABASE_URL" }), { 
@@ -226,14 +262,27 @@ serve(async (_req) => {
         });
     }
     
+    // Detectar modo: ?mode=full (todos los días) o por defecto solo HOY (rápido)
+    const url = new URL(req.url);
+    const mode = url.searchParams.get('mode') || 'incremental';
+    
     const db = sql(DATABASE_URL, { max: 1, connect_timeout: 10 });
     const startTime = Date.now();
     
     try {
-        console.log('🎰 MODO LUDÓPATA ACTIVADO - Retry agresivo habilitado');
-        console.log('🔍 Obteniendo sorteos últimos 7 días...');
+        console.log(`🎰 MODO: ${mode.toUpperCase()}`);
         
-        const sorteos = await fetchLast7DaysSorteos();
+        let sorteos: SorteoInfo[];
+        
+        if (mode === 'full') {
+            // Modo FULL: Trae últimos 7 días (primera vez)
+            console.log('📅 Obteniendo sorteos últimos 7 días...');
+            sorteos = await fetchLast7DaysSorteos();
+        } else {
+            // Modo INCREMENTAL: Solo sorteos de HOY (rápido)
+            console.log('⚡ Obteniendo solo sorteos de HOY...');
+            sorteos = await fetchTodaysSorteos();
+        }
         
         if (sorteos.length === 0) {
             return new Response(JSON.stringify({ 
@@ -244,21 +293,19 @@ serve(async (_req) => {
             });
         }
         
-        console.log(`✅ ${sorteos.length} sorteos para procesar con ${Object.keys(JURISDICCIONES).length} jurisdicciones`);
+        console.log(`✅ ${sorteos.length} sorteos x ${Object.keys(JURISDICCIONES).length} jurisdicciones`);
         
         const promises: Promise<void>[] = [];
         let scrapeCount = 0;
         let errorCount = 0;
         
-        // Solo scrapear sorteos de hoy con retry agresivo
-        // El resto sin retry (datos históricos ya deberían estar)
         const today = getTodayDate();
         const todaysSorteos = sorteos.filter(s => s.fecha === today);
         const historicalSorteos = sorteos.filter(s => s.fecha !== today);
         
-        console.log(`📅 Hoy: ${todaysSorteos.length} sorteos | Históricos: ${historicalSorteos.length} sorteos`);
+        console.log(`📅 Hoy: ${todaysSorteos.length} | Históricos: ${historicalSorteos.length}`);
         
-        // Scrapear sorteos de hoy CON retry agresivo
+        // Sorteos de HOY: CON retry agresivo (pueden no estar todavía)
         for (const [nombreJur, codigoJur] of Object.entries(JURISDICCIONES)) {
             for (const sorteo of todaysSorteos) {
                 promises.push((async () => {
@@ -273,7 +320,7 @@ serve(async (_req) => {
             }
         }
         
-        // Scrapear históricos SIN retry (1 solo intento)
+        // Sorteos HISTÓRICOS: SIN retry (1 intento, deberían estar)
         for (const [nombreJur, codigoJur] of Object.entries(JURISDICCIONES)) {
             for (const sorteo of historicalSorteos) {
                 promises.push((async () => {
@@ -318,14 +365,13 @@ serve(async (_req) => {
         
         return new Response(JSON.stringify({
             success: true,
+            mode: mode,
             tiempo_total: `${totalTime}s`,
             sorteos_hoy: todaysSorteos.length,
             sorteos_historicos: historicalSorteos.length,
             jurisdicciones: Object.keys(JURISDICCIONES).length,
             guardados: scrapeCount,
-            errores: errorCount,
-            dias: 7,
-            retry_strategy: "10x10s + 5x20s + 5x30s (max 5 min)"
+            errores: errorCount
         }), {
             status: 200,
             headers: { "Content-Type": "application/json" }
