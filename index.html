@@ -33,8 +33,15 @@
             border-radius: 8px;
             margin-bottom: 25px;
             display: flex;
+            gap: 20px;
             align-items: center;
-            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         label {
@@ -86,6 +93,15 @@
             font-size: 1.4em;
             font-weight: bold;
             color: #00ff99; /* Verde Neón */
+        }
+
+        .jurisdiccion {
+            font-size: 0.85em;
+            color: #ffcc00;
+            font-weight: bold;
+            background-color: #222;
+            padding: 4px 8px;
+            border-radius: 4px;
         }
 
         .fecha {
@@ -163,15 +179,26 @@
         <h1>🤑 Quiniela Live Viewer (Demo)</h1>
 
         <div class="controls">
-            <label for="turno-selector">Filtrar Turno:</label>
-            <select id="turno-selector">
-                <option value="Todos">Todos</option>
-                <option value="La Previa">La Previa</option>
-                <option value="Primera">Primera</option>
-                <option value="Matutina">Matutina</option>
-                <option value="Vespertina">Vespertina</option>
-                <option value="Nocturna">Nocturna</option>
-            </select>
+            <div class="control-group">
+                <label for="jurisdiccion-selector">Jurisdicción:</label>
+                <select id="jurisdiccion-selector">
+                    <option value="Todas">Todas</option>
+                    <option value="BsAs">Buenos Aires</option>
+                    <option value="SantaFe">Santa Fe</option>
+                    <option value="Cordoba">Córdoba</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="turno-selector">Turno:</label>
+                <select id="turno-selector">
+                    <option value="Todos">Todos</option>
+                    <option value="La Previa">La Previa</option>
+                    <option value="Primera">Primera</option>
+                    <option value="Matutina">Matutina</option>
+                    <option value="Vespertina">Vespertina</option>
+                    <option value="Nocturna">Nocturna</option>
+                </select>
+            </div>
         </div>
 
         <div id="results-container">
@@ -180,11 +207,12 @@
     </div>
 
     <script>
-        // ⚠️ REEMPLAZA TU URL DE LA API AQUÍ
-        const API_URL = 'https://vvtujkedjalepkhbycpv.supabase.co/functions/v1/quiniela-api?jurisdiccion=Ciudad';
+        // ⚠️ REEMPLAZA TU URL DE LA API AQUÍ (SIN filtro = TODAS las jurisdicciones)
+        const API_URL = 'https://vvtujkedjalepkhbycpv.supabase.co/functions/v1/quiniela-api';
         
         const resultsContainer = document.getElementById('results-container');
         const turnoSelector = document.getElementById('turno-selector');
+        const jurisdiccionSelector = document.getElementById('jurisdiccion-selector');
         let allResults = []; // Almacenará todos los resultados crudos una vez cargados
 
         // Función para renderizar una única tarjeta de sorteo
@@ -208,8 +236,13 @@
             return `
                 <div class="card">
                     <div class="header">
-                        <span class="turno">${sorteo.turno}</span>
-                        <span class="fecha">${sorteo.fecha}</span>
+                        <div>
+                            <span class="turno">${sorteo.turno}</span>
+                            <div style="margin-top: 5px;">
+                                <span class="jurisdiccion">${sorteo.jurisdiccion}</span>
+                            </div>
+                        </div>
+                        <span class="fecha">${new Date(sorteo.fecha).toLocaleDateString('es-AR')}</span>
                     </div>
 
                     <div class="cabeza-container">
@@ -229,6 +262,7 @@
         // Función principal para cargar y filtrar los datos
         const loadAndFilterResults = async () => {
             const selectedTurno = turnoSelector.value;
+            const selectedJurisdiccion = jurisdiccionSelector.value;
             
             // Si allResults está vacío, es el primer fetch
             if (allResults.length === 0) {
@@ -249,14 +283,16 @@
                 }
             }
 
-            // 2. Filtrar los resultados
-            const filteredResults = allResults.filter(sorteo => 
-                selectedTurno === 'Todos' || sorteo.turno === selectedTurno
-            );
+            // 2. Filtrar los resultados por turno y jurisdicción
+            const filteredResults = allResults.filter(sorteo => {
+                const matchTurno = selectedTurno === 'Todos' || sorteo.turno === selectedTurno;
+                const matchJurisdiccion = selectedJurisdiccion === 'Todas' || sorteo.jurisdiccion === selectedJurisdiccion;
+                return matchTurno && matchJurisdiccion;
+            });
 
             // 3. Renderizar la UI
             if (filteredResults.length === 0) {
-                resultsContainer.innerHTML = `<div class="loading">No se encontraron resultados para el turno: ${selectedTurno}.</div>`;
+                resultsContainer.innerHTML = `<div class="loading">No se encontraron resultados.</div>`;
             } else {
                 resultsContainer.innerHTML = filteredResults.map(renderCard).join('');
             }
@@ -264,6 +300,7 @@
 
         // Escuchadores de eventos
         turnoSelector.addEventListener('change', loadAndFilterResults);
+        jurisdiccionSelector.addEventListener('change', loadAndFilterResults);
 
         // Cargar los datos al iniciar la página
         loadAndFilterResults();

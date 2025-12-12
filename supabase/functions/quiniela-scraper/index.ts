@@ -17,12 +17,13 @@ const RETRY_STRATEGY = [
     // Total: ~5.8 minutos máximo
 ];
 
+// ⚠️ Solo jurisdicciones que comparten IDs de sorteo con LOTBA
 const JURISDICCIONES: Record<string, string> = { 
-    'Ciudad': '51',
+    // 'Ciudad': '51',  // ❌ Ciudad usa IDs diferentes, no funciona con estos sorteos
     'BsAs': '53',
     'SantaFe': '72',
-    'Cordoba': '55',
-    'EntreRios': '64'
+    'Cordoba': '55'
+    // 'EntreRios': '64'  // ❌ Entre Ríos tiene pocos datos para estos sorteos
 };
 
 function getTurnoFromId(sorteoId: string): string {
