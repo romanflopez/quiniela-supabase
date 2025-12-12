@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiniela Live Viewer | Resultados LOTBA</title>
+    <style>
+        /* Estilos de Gambling/High Contrast UI */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a; /* Fondo oscuro */
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #ffcc00; /* Dorado/Amarillo de apuesta */
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px #000000;
+        }
+
+        /* Selector de Turnos */
+        .controls {
+            background-color: #333333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        label {
+            font-weight: bold;
+            color: #cccccc;
+            margin-right: 10px;
+        }
+
+        #turno-selector {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #444;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        /* Contenedor de Resultados (Grilla) */
+        #results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* Tarjeta de Sorteo */
+        .card {
+            background-color: #2c2c2c;
+            border: 2px solid #ffcc00;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .turno {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #00ff99; /* Verde Neón */
+        }
+
+        .fecha {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        /* Estilo de la Cabeza (El más importante) */
+        .cabeza-container {
+            text-align: center;
+            background-color: #440000; /* Rojo Oscuro */
+            border: 3px solid #ff0000;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .cabeza-label {
+            font-size: 1em;
+            color: #ccc;
+        }
+
+        .cabeza-numero {
+            font-size: 3em;
+            font-weight: 900;
+            color: #ff0000; /* Rojo Brillante */
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        /* Bloque de Letras */
+        .letras-container {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #383838;
+            border-radius: 4px;
+        }
+
+        .letras-label {
+            font-weight: bold;
+            color: #00ff99;
+            margin-bottom: 5px;
+        }
+
+        .letras-text {
+            font-size: 1.2em;
+            color: #fff;
+            letter-spacing: 3px;
+        }
+
+        /* Extracto de los 20 números */
+        .extracto-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+            gap: 10px;
+            font-size: 0.9em;
+            padding-top: 10px;
+            border-top: 1px solid #3a3a3a;
+        }
+
+        .extracto-item {
+            color: #ccc;
+        }
+
+        .loading, .error {
+            text-align: center;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🤑 Quiniela Live Viewer (Demo)</h1>
+
+        <div class="controls">
+            <label for="turno-selector">Filtrar Turno:</label>
+            <select id="turno-selector">
+                <option value="Todos">Todos</option>
+                <option value="La Previa">La Previa</option>
+                <option value="Primera">Primera</option>
+                <option value="Matutina">Matutina</option>
+                <option value="Vespertina">Vespertina</option>
+                <option value="Nocturna">Nocturna</option>
+            </select>
+        </div>
+
+        <div id="results-container">
+            <div class="loading" id="loading">Cargando resultados en tiempo real...</div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REEMPLAZA TU URL DE LA API AQUÍ
+        const API_URL = 'https://vvtujkedjalepkhbycpv.supabase.co/functions/v1/quiniela-api?jurisdiccion=Ciudad';
+        
+        const resultsContainer = document.getElementById('results-container');
+        const turnoSelector = document.getElementById('turno-selector');
+        let allResults = []; // Almacenará todos los resultados crudos una vez cargados
+
+        // Función para renderizar una única tarjeta de sorteo
+        const renderCard = (sorteo) => {
+            const mostrarLetras = sorteo.jurisdiccion === 'Ciudad' && sorteo.letras_oficiales && sorteo.letras_oficiales.length > 0;
+            
+            // Construir el HTML del extracto (los 20 números)
+            const extractoHTML = sorteo.numeros_oficiales.map((num, index) => `
+                <div class="extracto-item">${index + 1}. ${num}</div>
+            `).join('');
+
+            // Construir el HTML de las letras (si aplica)
+            const letrasHTML = mostrarLetras ? `
+                <div class="letras-container">
+                    <div class="letras-label">Letras:</div>
+                    <div class="letras-text">${sorteo.letras_oficiales.join(' - ')}</div>
+                </div>
+            ` : '';
+
+            // Retornar el HTML completo de la tarjeta
+            return `
+                <div class="card">
+                    <div class="header">
+                        <span class="turno">${sorteo.turno}</span>
+                        <span class="fecha">${sorteo.fecha}</span>
+                    </div>
+
+                    <div class="cabeza-container">
+                        <div class="cabeza-label">A la Cabeza:</div>
+                        <div class="cabeza-numero">${sorteo.cabeza || '---'}</div>
+                    </div>
+                    
+                    ${letrasHTML}
+
+                    <div class="extracto-grid">
+                        ${extractoHTML}
+                    </div>
+                </div>
+            `;
+        };
+
+        // Función principal para cargar y filtrar los datos
+        const loadAndFilterResults = async () => {
+            const selectedTurno = turnoSelector.value;
+            
+            // Si allResults está vacío, es el primer fetch
+            if (allResults.length === 0) {
+                resultsContainer.innerHTML = '<div class="loading">Cargando resultados...</div>';
+                try {
+                    const response = await fetch(API_URL);
+                    const data = await response.json();
+
+                    if (data.status === 'ok') {
+                        allResults = data.results;
+                    } else {
+                        throw new Error(data.details || 'Error desconocido al cargar el JSON.');
+                    }
+                } catch (error) {
+                    resultsContainer.innerHTML = `<div class="error">❌ Error: No se pudo conectar a la API de Supabase. Asegúrate de que la URL sea correcta.</div>`;
+                    console.error("Fallo al cargar la API:", error);
+                    return;
+                }
+            }
+
+            // 2. Filtrar los resultados
+            const filteredResults = allResults.filter(sorteo => 
+                selectedTurno === 'Todos' || sorteo.turno === selectedTurno
+            );
+
+            // 3. Renderizar la UI
+            if (filteredResults.length === 0) {
+                resultsContainer.innerHTML = `<div class="loading">No se encontraron resultados para el turno: ${selectedTurno}.</div>`;
+            } else {
+                resultsContainer.innerHTML = filteredResults.map(renderCard).join('');
+            }
+        };
+
+        // Escuchadores de eventos
+        turnoSelector.addEventListener('change', loadAndFilterResults);
+
+        // Cargar los datos al iniciar la página
+        loadAndFilterResults();
+
+        // Opcional: Recargar los datos cada 30 segundos (simulando tiempo real)
+        setInterval(loadAndFilterResults, 30000); 
+
+    </script>
+
+</body>
+</html>
+
