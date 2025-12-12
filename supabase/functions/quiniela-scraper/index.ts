@@ -17,13 +17,13 @@ const RETRY_STRATEGY = [
     // Total: ~5.8 minutos máximo
 ];
 
-// ✅ Todas las jurisdicciones funcionando
+// ✅ 4 jurisdicciones principales (óptimo para evitar timeout)
 const JURISDICCIONES: Record<string, string> = { 
     'Ciudad': '51',     // ✅ Ciudad (con letras)
     'BsAs': '53',
     'SantaFe': '72',
-    'Cordoba': '55',
-    'EntreRios': '64'
+    'Cordoba': '55'
+    // EntreRios: tiene muy pocos datos, lo agregamos después si hace falta
 };
 
 function getTurnoFromId(sorteoId: string): string {
