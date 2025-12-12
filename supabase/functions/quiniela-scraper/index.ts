@@ -17,13 +17,12 @@ const RETRY_STRATEGY = [
     // Total: ~5.8 minutos máximo
 ];
 
-// ✅ Todas las jurisdicciones con datos disponibles
+// ⚡ Versión RÁPIDA: Solo 3 jurisdicciones (para evitar timeout)
 const JURISDICCIONES: Record<string, string> = { 
-    'Ciudad': '51',     // ✅ Ciudad usa los MISMOS IDs (confirmado)
     'BsAs': '53',
     'SantaFe': '72',
-    'Cordoba': '55',
-    'EntreRios': '64'   // ⚠️ Entre Ríos puede tener pocos datos
+    'Cordoba': '55'
+    // Agregamos Ciudad y EntreRios después de confirmar que funciona
 };
 
 function getTurnoFromId(sorteoId: string): string {
