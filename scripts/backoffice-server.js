@@ -18,6 +18,9 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Servir archivos estáticos desde el directorio raíz del proyecto
+app.use(express.static(path.join(__dirname, '..')));
+
 // Logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -177,6 +180,7 @@ app.listen(PORT, () => {
     console.log('🎰 BACKOFFICE SERVER - Quiniela Scrapers');
     console.log('═══════════════════════════════════════════════════════════════');
     console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`);
+    console.log(`🌐 Backoffice UI: http://localhost:${PORT}/backoffice.html`);
     console.log(`📡 Endpoint scraping: POST http://localhost:${PORT}/api/scrape`);
     console.log(`📊 Endpoint status: GET http://localhost:${PORT}/api/status`);
     console.log('═══════════════════════════════════════════════════════════════');
@@ -184,7 +188,8 @@ app.listen(PORT, () => {
     Object.entries(SCRAPERS).forEach(([key, scraper]) => {
         console.log(`   • ${scraper.name.padEnd(15)} → ${key}`);
     });
-    console.log('\n🚀 Listo para recibir requests del backoffice!\n');
+    console.log('\n🚀 Listo para recibir requests del backoffice!');
+    console.log('👉 Abre http://localhost:3000/backoffice.html en tu navegador\n');
 });
 
 // Manejo de errores global
