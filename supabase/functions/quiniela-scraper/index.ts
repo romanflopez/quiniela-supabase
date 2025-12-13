@@ -9,11 +9,11 @@ const LOTBA_PAGE_URL = 'https://quiniela.loteriadelaciudad.gob.ar/';
 const ENDPOINT_URL = 'https://quiniela.loteriadelaciudad.gob.ar/resultadosQuiniela/consultaResultados.php';
 const CODIGO_FIJO = '0080';
 
-// 🎯 ESTRATEGIA DE RETRY (OPTIMIZADA para Edge Functions)
+// 🎯 ESTRATEGIA DE RETRY (ULTRA RÁPIDO para Edge Functions)
 const RETRY_STRATEGY = [
-    { attempts: 5, delay: 5000 },    // 5 intentos cada 5s = 25s
-    { attempts: 3, delay: 10000 }    // 3 intentos cada 10s = 30s
-    // Total: ~60 segundos máximo (seguro para Edge Functions)
+    { attempts: 3, delay: 3000 },    // 3 intentos cada 3s = 9s
+    { attempts: 2, delay: 5000 }     // 2 intentos cada 5s = 10s
+    // Total: ~20 segundos máximo (súper rápido)
 ];
 
 // ✅ 4 jurisdicciones principales (óptimo para evitar timeout)
