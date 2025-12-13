@@ -9,6 +9,13 @@ echo 🎰 BACKOFFICE SERVER - Iniciando...
 echo ═══════════════════════════════════════════════════════════════════
 echo.
 
+REM Configurar DATABASE_URL con password URL-encoded
+REM Password original: td!ezX!#W5gpn6/
+REM Password encoded: td%%21ezX%%21%%23W5gpn6%%2F
+set DATABASE_URL=postgresql://postgres:td%%21ezX%%21%%23W5gpn6%%2F@db.vvtujkedjalepkhbycpv.supabase.co:5432/postgres
+echo ✅ DATABASE_URL configurado
+echo.
+
 REM Verificar que node_modules exista
 if not exist "node_modules" (
     echo ⚠️  Instalando dependencias...
