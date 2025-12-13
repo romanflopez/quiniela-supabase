@@ -1,0 +1,139 @@
+═══════════════════════════════════════════════════════════════
+   🚀 CÓMO EJECUTAR LOS WORKFLOWS DE GITHUB ACTIONS
+═══════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANTE: Los workflows con schedule (cron) NO se ejecutan
+automáticamente hasta su horario programado. Necesitas ejecutarlos
+manualmente la primera vez.
+
+═══════════════════════════════════════════════════════════════
+   📋 PASOS PARA EJECUTAR MANUALMENTE
+═══════════════════════════════════════════════════════════════
+
+1. Ir a: https://github.com/romanflopez/quiniela-supabase/actions
+
+2. En el menú lateral izquierdo, verás la lista de workflows:
+   ✅ Scraper Quiniela - Ciudad (Dedicado)
+   ✅ Scraper Quiniela - La Previa
+   ✅ Scraper Quiniela - Primera
+   ✅ Scraper Quiniela - Matutina
+   ✅ Scraper Quiniela - Vespertina
+   ✅ Scraper Quiniela - Nocturna
+
+3. Click en "Scraper Quiniela - Ciudad (Dedicado)"
+
+4. Verás un botón "Run workflow" en la parte superior derecha
+
+5. Click en "Run workflow"
+
+6. Aparecerá un dropdown, click nuevamente en "Run workflow" (verde)
+
+7. Esperar 2-3 minutos
+
+8. Refrescar la página para ver el resultado:
+   ✅ Verde = Éxito
+   ❌ Rojo = Falló
+
+9. Click en la ejecución para ver los logs detallados
+
+═══════════════════════════════════════════════════════════════
+   ⏰ HORARIOS DE EJECUCIÓN AUTOMÁTICA
+═══════════════════════════════════════════════════════════════
+
+Después de la primera ejecución manual, los workflows se ejecutarán
+automáticamente en estos horarios (UTC):
+
+🔤 Ciudad (Dedicado):
+   • Cada 3 horas: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+
+🌅 La Previa:
+   • 00:00 UTC (21:00 hora Argentina día anterior)
+
+🌄 Primera:
+   • 02:00 UTC (23:00 hora Argentina día anterior)
+
+☀️ Matutina:
+   • 04:00 UTC (01:00 hora Argentina)
+
+🌆 Vespertina:
+   • 06:00 UTC (03:00 hora Argentina)
+
+🌙 Nocturna:
+   • 08:00 UTC (05:00 hora Argentina)
+
+═══════════════════════════════════════════════════════════════
+   🔍 VERIFICAR SI FUNCIONÓ
+═══════════════════════════════════════════════════════════════
+
+Opción 1: Ver en GitHub Actions
+   • Verde ✅ = Datos guardados exitosamente
+   • Rojo ❌ = Hubo un error (click para ver logs)
+
+Opción 2: Ver en la Base de Datos
+   • Conectar a Supabase Dashboard
+   • Table Editor → quiniela_resultados
+   • Ordenar por "created_at" DESC
+   • Deberías ver nuevos registros
+
+Opción 3: Ver en el Frontend
+   • Abrir index.html
+   • Refrescar la página
+   • Deberías ver los nuevos sorteos
+
+═══════════════════════════════════════════════════════════════
+   ⚠️ SI CIUDAD FALLA
+═══════════════════════════════════════════════════════════════
+
+Ciudad históricamente es problemático. Si el workflow falla:
+
+1. Ver los logs completos en GitHub Actions
+2. El scraper intentará 5 veces con delays crecientes:
+   • Intento 1: 4 segundos
+   • Intento 2: 6 segundos  
+   • Intento 3: 9 segundos
+   • Intento 4: 13.5 segundos
+   • Intento 5: 20.25 segundos
+
+3. Si falla después de 5 intentos:
+   • Es normal para Ciudad
+   • El workflow se ejecutará nuevamente en 3 horas
+   • Eventualmente encontrará un sorteo disponible
+
+4. Errores comunes:
+   • "No se encontraron sorteos válidos" → Normal, intentar más tarde
+   • "HTTP 500/503" → API de LOTBA caída temporalmente
+   • "No se pudieron extraer datos" → HTML incompleto
+
+═══════════════════════════════════════════════════════════════
+   💡 TIPS
+═══════════════════════════════════════════════════════════════
+
+• Ejecuta todos los workflows manualmente la primera vez para
+  activarlos
+
+• Después de la primera ejecución manual, los crons funcionarán
+  automáticamente
+
+• Los workflows de Ciudad se ejecutan más frecuentemente (cada 3
+  horas) porque Ciudad falla más
+
+• Puedes ejecutar cualquier workflow manualmente en cualquier
+  momento con "Run workflow"
+
+• Si un workflow falla, puedes re-ejecutarlo con "Re-run jobs"
+
+═══════════════════════════════════════════════════════════════
+   📞 SOLUCIÓN RÁPIDA
+═══════════════════════════════════════════════════════════════
+
+Si quieres probar AHORA que todo funciona:
+
+1. Ir a Actions
+2. Click en "Scraper Quiniela - Primera" (suele tener datos)
+3. Run workflow
+4. Esperar 2 minutos
+5. Verificar que salga verde ✅
+6. Abrir index.html → debería mostrar un sorteo nuevo
+
+═══════════════════════════════════════════════════════════════
+
