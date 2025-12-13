@@ -448,9 +448,9 @@
     </div>
 
     <script>
-        // Configuración
-        const SUPABASE_URL = 'https://vvtujkedjalepkhbycpv.supabase.co';
-        const SCRAPER_FUNCTION = `${SUPABASE_URL}/functions/v1/quiniela-scraper`;
+        // Configuración - Servidor local (sin CORS issues)
+        const BACKEND_URL = 'http://localhost:3000';
+        const SCRAPER_ENDPOINT = `${BACKEND_URL}/api/scrape`;
 
         // Agregar log
         function addLog(message, type = 'info') {
@@ -522,30 +522,44 @@
             updateStatus(scraper, 'running', '⏳ Ejecutando...');
 
             try {
-                // Llamar a la Edge Function de Supabase
-                const response = await fetch(SCRAPER_FUNCTION, {
+                // Llamar al servidor backend local
+                const response = await fetch(SCRAPER_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        turno: scraper,
-                        manual: true
+                        turno: scraper
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok && data.status === 'ok') {
-                    addLog(`✅ ${name} - Scraping exitoso: ${data.sorteos_guardados} sorteos guardados`, 'success');
-                    updateStatus(scraper, 'success', `✅ ${data.sorteos_guardados} sorteos guardados`);
+                    const sorteos = data.sorteos_guardados || 1;
+                    addLog(`✅ ${name} - Scraping exitoso: ${sorteos} sorteo(s) guardado(s)`, 'success');
+                    updateStatus(scraper, 'success', `✅ ${sorteos} sorteo(s) guardado(s)`);
+                    
+                    // Log detalles adicionales
+                    if (data.output) {
+                        const lines = data.output.split('\n').filter(l => l.trim());
+                        lines.slice(-3).forEach(line => {
+                            if (line.includes('✅') || line.includes('ÉXITO')) {
+                                addLog(`   ${line.trim()}`, 'success');
+                            }
+                        });
+                    }
                 } else {
                     throw new Error(data.details || 'Error desconocido');
                 }
 
             } catch (error) {
-                addLog(`❌ ${name} - Error: ${error.message}`, 'error');
-                updateStatus(scraper, 'error', `❌ Error: ${error.message}`);
+                const errorMsg = error.message.includes('Failed to fetch') 
+                    ? 'Servidor backend no disponible. Ejecuta: npm run backoffice'
+                    : error.message;
+                
+                addLog(`❌ ${name} - Error: ${errorMsg}`, 'error');
+                updateStatus(scraper, 'error', `❌ Error: ${errorMsg}`);
             }
         }
 
