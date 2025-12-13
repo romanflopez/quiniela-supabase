@@ -34,7 +34,8 @@ const CIUDAD_CONFIG = {
     // Validaciones específicas de Ciudad
     VALIDACION: {
         NUMEROS_ESPERADOS: 20,
-        LETRAS_ESPERADAS: 20
+        LETRAS_MIN: 1,      // Mínimo 1 letra
+        LETRAS_MAX: 20      // Máximo 20 letras (usualmente son 4-5)
     }
 };
 
@@ -184,8 +185,9 @@ function extraerResultadosCiudad(html, sorteoId, fecha) {
             return null;
         }
         
-        if (letras.length !== CIUDAD_CONFIG.VALIDACION.LETRAS_ESPERADAS) {
-            log('⚠️', `Ciudad - Letras inválidas: ${letras.length}/${CIUDAD_CONFIG.VALIDACION.LETRAS_ESPERADAS}`);
+        // Validar que tengamos al menos algunas letras (Ciudad usualmente tiene 4-5)
+        if (letras.length < CIUDAD_CONFIG.VALIDACION.LETRAS_MIN || letras.length > CIUDAD_CONFIG.VALIDACION.LETRAS_MAX) {
+            log('⚠️', `Ciudad - Letras inválidas: ${letras.length} (esperado: ${CIUDAD_CONFIG.VALIDACION.LETRAS_MIN}-${CIUDAD_CONFIG.VALIDACION.LETRAS_MAX})`);
             return null;
         }
         
@@ -250,7 +252,8 @@ async function main(sorteoInicial = null, maxIntentos = 10) {
     log('📅', `Fecha: ${fecha}`);
     
     // Sorteo inicial (si no se especifica, usar un ID reciente)
-    let sorteoId = sorteoInicial || 51800;  // ID aproximado actual de Ciudad
+    // Los últimos sorteos que vimos son: 51776, 51777, 51778, 51779
+    let sorteoId = sorteoInicial || 51780;  // Empezar desde el siguiente sorteo disponible
     log('🎯', `Sorteo inicial: ${sorteoId}`);
     log('🔄', `Máximo de intentos: ${maxIntentos}\n`);
     
@@ -306,17 +309,20 @@ async function main(sorteoInicial = null, maxIntentos = 10) {
     process.exit(sorteoGuardado ? 0 : 1);
 }
 
-// Ejecutar si es llamado directamente
-if (import.meta.url === `file://${process.argv[1]}`) {
-    // Leer argumentos
-    const sorteoInicial = process.argv[2] ? parseInt(process.argv[2]) : null;
-    const maxIntentos = process.argv[3] ? parseInt(process.argv[3]) : 10;
-    
-    main(sorteoInicial, maxIntentos).catch(error => {
-        console.error('💥 Error fatal:', error);
-        process.exit(1);
-    });
-}
+// ═══════════════════════════════════════════════════════════════════
+// EJECUCIÓN PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════
+
+// Leer argumentos
+const sorteoInicial = process.argv[2] ? parseInt(process.argv[2]) : null;
+const maxIntentos = process.argv[3] ? parseInt(process.argv[3]) : 10;
+
+// Ejecutar
+main(sorteoInicial, maxIntentos).catch(error => {
+    console.error('💥 Error fatal:', error);
+    console.error(error.stack);
+    process.exit(1);
+});
 
 export { scrapearSorteoCiudad, extraerResultadosCiudad };
 
