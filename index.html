@@ -2,649 +2,698 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎰 Quiniela Live | Resultados en Tiempo Real</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Resultados de Quiniela - LOTBA</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
-        
-        /* Estilos de Gambling/Casino UI */
+        /* ═══════════════════════════════════════════════════════════════
+           RESET Y BASE - Mobile First, Accesibilidad AAA
+           ═══════════════════════════════════════════════════════════════ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: 'Roboto', 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #000000;
+            color: #FFFFFF;
+            line-height: 1.6;
             min-height: 100vh;
+            padding-bottom: 40px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Header con efectos */
-        .header-section {
-            text-align: center;
-            margin-bottom: 30px;
+        /* ═══════════════════════════════════════════════════════════════
+           HEADER STICKY - Siempre visible
+           ═══════════════════════════════════════════════════════════════ */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #000000;
+            border-bottom: 3px solid #FFFF00;
             padding: 20px;
-            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
         }
 
-        h1 {
-            color: #ffd700;
-            font-size: 2.5em;
+        .header h1 {
+            font-size: 28px;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
-                         0 0 40px rgba(255, 215, 0, 0.3);
-            animation: glow 2s ease-in-out infinite alternate;
+            margin-bottom: 20px;
+            color: #FFFFFF;
+            letter-spacing: 1px;
         }
 
-        @keyframes glow {
-            from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3); }
-            to { text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.5); }
+        /* ═══════════════════════════════════════════════════════════════
+           FILTROS - Botones grandes y táctiles
+           ═══════════════════════════════════════════════════════════════ */
+        .filtros-container {
+            background: #111111;
+            padding: 20px;
+            margin: 0 20px 30px 20px;
+            border: 2px solid #333333;
+            border-radius: 8px;
         }
 
-        .subtitle {
-            color: #00ff88;
-            font-size: 1.2em;
-            margin-top: 10px;
+        .filtro-label {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFF00;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Stats Bar */
-        .stats-bar {
+        .filtro-select {
+            width: 100%;
+            min-height: 56px;
+            font-size: 20px;
+            font-weight: 700;
+            background: #000000;
+            color: #FFFFFF;
+            border: 3px solid #FFFF00;
+            border-radius: 8px;
+            padding: 14px 16px;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .filtro-select:focus {
+            outline: none;
+            border-color: #00FF00;
+            box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.3);
+        }
+
+        .btn-group {
             display: flex;
-            justify-content: space-around;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px 25px;
-            border-radius: 10px;
-            border: 2px solid #00ff88;
+        .btn {
             flex: 1;
-            min-width: 150px;
+            min-width: 140px;
+            min-height: 56px;
+            font-size: 20px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-actualizar {
+            background: #00FF00;
+            color: #000000;
+        }
+
+        .btn-limpiar {
+            background: #FFFF00;
+            color: #000000;
+        }
+
+        .btn:focus {
+            outline: 4px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           ESTADÍSTICAS - Info rápida
+           ═══════════════════════════════════════════════════════════════ */
+        .stats {
+            background: #111111;
+            padding: 20px;
+            margin: 0 20px 30px 20px;
+            border: 2px solid #333333;
+            border-radius: 8px;
             text-align: center;
         }
 
-        .stat-label {
-            color: #aaa;
-            font-size: 0.9em;
-            margin-bottom: 5px;
+        .stats-text {
+            font-size: 18px;
+            color: #FFFF00;
+            line-height: 1.8;
         }
 
-        .stat-value {
-            color: #00ff88;
-            font-size: 1.8em;
-            font-weight: 900;
+        /* ═══════════════════════════════════════════════════════════════
+           TARJETAS DE SORTEO - Componente Principal
+           ═══════════════════════════════════════════════════════════════ */
+        .sorteos-container {
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
         }
 
-        /* Selector de Filtros */
-        .controls {
-            background: linear-gradient(135deg, #2a2a3e 0%, #1f1f2e 100%);
+        .sorteo-card {
+            background: #111111;
+            border: 3px solid #333333;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Encabezado de tarjeta */
+        .sorteo-header {
+            background: #1a1a1a;
             padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border: 2px solid #ffd700;
+            border-bottom: 2px solid #333333;
         }
-        
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
+
+        .sorteo-turno {
+            font-size: 24px;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
         }
-        
-        .control-group {
+
+        .sorteo-info {
+            font-size: 18px;
+            color: #FFFF00;
+            line-height: 1.6;
+        }
+
+        /* BLOQUE CABEZA - Máxima jerarquía visual */
+        .cabeza-container {
+            background: #660000;
+            padding: 30px 20px;
+            text-align: center;
+            border: 4px solid #FF0000;
+            margin: 20px;
+            border-radius: 8px;
+        }
+
+        .cabeza-label {
+            font-size: 22px;
+            font-weight: 700;
+            color: #FFFF00;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .cabeza-numero {
+            font-size: 64px;
+            font-weight: 900;
+            color: #FF0000;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            letter-spacing: 8px;
+            line-height: 1;
+        }
+
+        /* BLOQUE LETRAS (para Ciudad) */
+        .letras-container {
+            background: #001a00;
+            padding: 20px;
+            margin: 0 20px 20px 20px;
+            border: 3px solid #00FF00;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .letras-label {
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFF00;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .letras-list {
+            font-size: 32px;
+            font-weight: 900;
+            color: #00FF00;
+            letter-spacing: 12px;
+            line-height: 1.4;
+        }
+
+        /* LISTA DE 20 NÚMEROS - Una sola columna, máxima claridad */
+        .numeros-container {
+            padding: 20px;
+        }
+
+        .numeros-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #FFFF00;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .numeros-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        label {
-            font-weight: bold;
-            color: #ffd700;
-            font-size: 0.9em;
-            text-transform: uppercase;
-        }
-
-        select, input {
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 2px solid #444;
-            background-color: #2a2a3e;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        select:hover, select:focus, input:hover, input:focus {
-            border-color: #ffd700;
-            outline: none;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn {
-            flex: 1;
+        .numero-item {
+            background: #1a1a1a;
             padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-            color: #000;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #ff6b6b 0%, #cc5555 100%);
-            color: #fff;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
-        }
-
-        /* Contenedor de Resultados (Grilla) */
-        #results-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
-        }
-
-        /* Tarjeta de Sorteo con efectos casino */
-        .card {
-            background: linear-gradient(135deg, #2a2a3e 0%, #1f1f2e 100%);
-            border: 3px solid #ffd700;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6),
-                        0 0 20px rgba(255, 215, 0, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                transparent,
-                rgba(255, 215, 0, 0.1),
-                transparent
-            );
-            transform: rotate(45deg);
-            transition: all 0.6s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8),
-                        0 0 40px rgba(255, 215, 0, 0.4);
-            border-color: #00ff88;
-        }
-
-        .card:hover::before {
-            left: 100%;
-        }
-
-        .card-header {
+            border-left: 4px solid #FFFF00;
+            border-radius: 4px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFFFF;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 1;
+            align-items: center;
+            gap: 12px;
         }
 
-        .turno {
-            font-size: 1.6em;
+        .numero-posicion {
+            color: #FFFF00;
+            min-width: 35px;
             font-weight: 900;
-            color: #00ff88;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
         }
 
-        .jurisdiccion {
-            font-size: 0.9em;
-            color: #000;
-            font-weight: bold;
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            padding: 6px 12px;
-            border-radius: 20px;
-            margin-top: 8px;
-            display: inline-block;
-        }
-
-        .card-meta {
-            text-align: right;
-        }
-
-        .fecha {
-            font-size: 0.85em;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-
-        .sorteo-ids {
-            font-size: 0.75em;
-            color: #666;
-            font-family: 'Courier New', monospace;
-        }
-
-        .sorteo-ids span {
-            display: block;
-            margin-top: 2px;
-        }
-
-        /* Estilo de la Cabeza (destacado tipo slot machine) */
-        .cabeza-container {
-            text-align: center;
-            background: linear-gradient(135deg, #8b0000 0%, #4a0000 100%);
-            border: 4px solid #ff0000;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3),
-                        inset 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 1;
-        }
-
-        .cabeza-label {
-            font-size: 0.9em;
-            color: #ffcccc;
-            text-transform: uppercase;
+        .numero-valor {
+            color: #FFFFFF;
+            font-weight: 900;
             letter-spacing: 2px;
-            margin-bottom: 10px;
         }
 
-        .cabeza-numero {
-            font-size: 4em;
-            font-weight: 900;
-            color: #ff0000;
-            text-shadow: 0 0 20px #ff0000,
-                         0 0 40px #ff0000,
-                         0 0 60px #ff0000;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        /* Bloque de Letras (Ciudad) */
-        .letras-container {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 12px;
-            background: linear-gradient(135deg, #4a0080 0%, #2a0050 100%);
-            border-radius: 10px;
-            border: 2px solid #9d00ff;
-            box-shadow: 0 0 15px rgba(157, 0, 255, 0.3);
-            position: relative;
-            z-index: 1;
-        }
-
-        .letras-label {
-            font-weight: bold;
-            color: #e0b3ff;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            font-size: 0.9em;
-        }
-
-        .letras-text {
-            font-size: 1.4em;
-            font-weight: 900;
-            color: #fff;
-            letter-spacing: 8px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        /* Extracto de los 20 números */
-        .extracto-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            font-size: 0.95em;
-            padding-top: 15px;
-            border-top: 2px solid rgba(255, 215, 0, 0.2);
-            position: relative;
-            z-index: 1;
-        }
-
-        .extracto-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            transition: all 0.2s ease;
-        }
-
-        .extracto-item:hover {
-            background: rgba(255, 215, 0, 0.2);
-            border-color: #ffd700;
-            transform: scale(1.1);
-        }
-
-        .extracto-item strong {
-            color: #ffd700;
-        }
-
+        /* ═══════════════════════════════════════════════════════════════
+           ESTADOS: Loading y Error
+           ═══════════════════════════════════════════════════════════════ */
         .loading, .error {
             text-align: center;
-            font-size: 1.5em;
-            padding: 50px;
-            grid-column: 1 / -1;
+            padding: 60px 20px;
+            font-size: 24px;
+            font-weight: 700;
         }
 
         .loading {
-            color: #00ff88;
-            animation: pulse 1.5s ease-in-out infinite;
+            color: #00FF00;
         }
 
         .error {
-            color: #ff6b6b;
+            color: #FF0000;
+            background: #1a0000;
+            border: 3px solid #FF0000;
+            border-radius: 8px;
+            margin: 20px;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            
-            .controls-grid {
-                grid-template-columns: 1fr;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 22px;
+            color: #FFFF00;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           RESPONSIVE - Tablet y Desktop (mejoras opcionales)
+           ═══════════════════════════════════════════════════════════════ */
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 36px;
             }
 
-            .extracto-grid {
-                grid-template-columns: repeat(3, 1fr);
+            .filtros-container {
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .stats {
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .sorteos-container {
+                max-width: 800px;
+                margin: 0 auto;
             }
 
             .cabeza-numero {
-                font-size: 3em;
+                font-size: 80px;
             }
+
+            /* En tablet/desktop, permitir 2 columnas para los números */
+            .numeros-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .sorteos-container {
+                max-width: 1000px;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           ACCESIBILIDAD ADICIONAL
+           ═══════════════════════════════════════════════════════════════ */
+        
+        /* Focus visible para navegación por teclado */
+        *:focus-visible {
+            outline: 4px solid #FFFF00;
+            outline-offset: 2px;
+        }
+
+        /* Mejorar contraste en selección de texto */
+        ::selection {
+            background: #FFFF00;
+            color: #000000;
+        }
+
+        /* Skip link para lectores de pantalla */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #FFFF00;
+            color: #000000;
+            padding: 8px;
+            z-index: 10000;
+            font-weight: 700;
+        }
+
+        .skip-link:focus {
+            top: 0;
         }
     </style>
 </head>
 <body>
+    <!-- Skip link para accesibilidad -->
+    <a href="#main-content" class="skip-link">Ir al contenido principal</a>
 
-    <div class="container">
-        <div class="header-section">
-            <h1>🎰 QUINIELA LIVE</h1>
-            <div class="subtitle">Resultados en Tiempo Real | Powered by LOTBA API</div>
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <div class="stat-label">Total Sorteos</div>
-                    <div class="stat-value" id="total-sorteos">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Jurisdicciones</div>
-                    <div class="stat-value" id="total-jurisdicciones">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Última Actualización</div>
-                    <div class="stat-value" id="ultima-actualizacion" style="font-size: 1.2em;">--:--</div>
-                </div>
+    <!-- ═══════════════════════════════════════════════════════════════
+         HEADER STICKY
+         ═══════════════════════════════════════════════════════════════ -->
+    <header class="header" role="banner">
+        <h1>Resultados de Quiniela</h1>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FILTROS
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="filtros-container" role="search" aria-label="Filtros de búsqueda">
+        <label for="filtro-jurisdiccion" class="filtro-label">
+            🔍 Filtrar por Jurisdicción:
+        </label>
+        <select id="filtro-jurisdiccion" class="filtro-select" aria-label="Seleccionar jurisdicción">
+            <option value="all">TODAS LAS JURISDICCIONES</option>
+            <option value="Ciudad">CIUDAD</option>
+            <option value="BsAs">BUENOS AIRES</option>
+            <option value="SantaFe">SANTA FE</option>
+            <option value="Cordoba">CÓRDOBA</option>
+        </select>
+
+        <label for="filtro-turno" class="filtro-label">
+            🕐 Filtrar por Turno:
+        </label>
+        <select id="filtro-turno" class="filtro-select" aria-label="Seleccionar turno">
+            <option value="all">TODOS LOS TURNOS</option>
+            <option value="La Previa">LA PREVIA</option>
+            <option value="Primera">PRIMERA</option>
+            <option value="Matutina">MATUTINA</option>
+            <option value="Vespertina">VESPERTINA</option>
+            <option value="Nocturna">NOCTURNA</option>
+        </select>
+
+        <div class="btn-group">
+            <button id="btn-actualizar" class="btn btn-actualizar" aria-label="Actualizar resultados">
+                ♻️ ACTUALIZAR
+            </button>
+            <button id="btn-limpiar" class="btn btn-limpiar" aria-label="Limpiar filtros">
+                🗑️ LIMPIAR
+            </button>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ESTADÍSTICAS
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="stats" role="status" aria-live="polite">
+        <div id="stats-text" class="stats-text">
+            Cargando estadísticas...
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         RESULTADOS
+         ═══════════════════════════════════════════════════════════════ -->
+    <main id="main-content" role="main">
+        <div id="sorteos-container" class="sorteos-container">
+            <div class="loading" role="status" aria-live="polite">
+                ⏳ CARGANDO RESULTADOS...
             </div>
         </div>
+    </main>
 
-        <div class="controls">
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label for="jurisdiccion-selector">🌍 Jurisdicción</label>
-                    <select id="jurisdiccion-selector">
-                        <option value="Todas">Todas las Jurisdicciones</option>
-                        <option value="Ciudad">🔤 Ciudad (con Letras)</option>
-                        <option value="BsAs">Buenos Aires</option>
-                        <option value="SantaFe">Santa Fe</option>
-                        <option value="Cordoba">Córdoba</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="turno-selector">🕐 Turno del Día</label>
-                    <select id="turno-selector">
-                        <option value="Todos">Todos los Turnos</option>
-                        <option value="La Previa">🌅 La Previa</option>
-                        <option value="Primera">🌄 Primera</option>
-                        <option value="Matutina">☀️ Matutina</option>
-                        <option value="Vespertina">🌆 Vespertina</option>
-                        <option value="Nocturna">🌙 Nocturna</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="sorteo-id-input">🎯 ID de Sorteo</label>
-                    <input type="number" id="sorteo-id-input" placeholder="Ej: 3150, 3151..." />
-                </div>
-                <div class="control-group">
-                    <label for="fecha-input">📅 Fecha</label>
-                    <input type="date" id="fecha-input" />
-                </div>
-            </div>
-            <div class="button-group">
-                <button class="btn btn-primary" onclick="loadAndFilterResults()">🔄 Actualizar Ahora</button>
-                <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Limpiar Filtros</button>
-            </div>
-        </div>
-
-        <div id="results-container">
-            <div class="loading" id="loading">🎲 Cargando resultados en tiempo real...</div>
-        </div>
-    </div>
-
+    <!-- ═══════════════════════════════════════════════════════════════
+         JAVASCRIPT - Lógica de la aplicación
+         ═══════════════════════════════════════════════════════════════ -->
     <script>
         // ⚠️ URL de la API de Supabase
         const API_URL = 'https://vvtujkedjalepkhbycpv.supabase.co/functions/v1/quiniela-api';
         
-        const resultsContainer = document.getElementById('results-container');
-        const turnoSelector = document.getElementById('turno-selector');
-        const jurisdiccionSelector = document.getElementById('jurisdiccion-selector');
-        const sorteoIdInput = document.getElementById('sorteo-id-input');
-        const fechaInput = document.getElementById('fecha-input');
-        
-        let allResults = []; // Almacenará todos los resultados
+        // Referencias DOM
+        const sorteosContainer = document.getElementById('sorteos-container');
+        const statsText = document.getElementById('stats-text');
+        const filtroJurisdiccion = document.getElementById('filtro-jurisdiccion');
+        const filtroTurno = document.getElementById('filtro-turno');
+        const btnActualizar = document.getElementById('btn-actualizar');
+        const btnLimpiar = document.getElementById('btn-limpiar');
 
-        // Actualizar estadísticas en el header
-        const updateStats = (results) => {
-            document.getElementById('total-sorteos').textContent = results.length;
-            const jurisdicciones = [...new Set(results.map(s => s.jurisdiccion))];
-            document.getElementById('total-jurisdicciones').textContent = jurisdicciones.length;
-            const now = new Date();
-            document.getElementById('ultima-actualizacion').textContent = 
-                now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-        };
+        // Estado de la aplicación
+        let todosLosSorteos = [];
 
-        // Función para renderizar una única tarjeta de sorteo
-        const renderCard = (sorteo) => {
-            const mostrarLetras = sorteo.jurisdiccion === 'Ciudad' && 
-                                  sorteo.letras_oficiales && 
-                                  sorteo.letras_oficiales.length > 0;
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Cargar datos desde la API
+        // ═══════════════════════════════════════════════════════════════
+        async function cargarDatos() {
+            try {
+                sorteosContainer.innerHTML = '<div class="loading" role="status">⏳ CARGANDO RESULTADOS...</div>';
+                statsText.textContent = 'Conectando con el servidor...';
+
+                const response = await fetch(API_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.results) {
+                    todosLosSorteos = data.results;
+                    actualizarEstadisticas(data.total_results);
+                    renderizarSorteos(todosLosSorteos);
+                } else {
+                    throw new Error('Formato de datos inválido');
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                sorteosContainer.innerHTML = `
+                    <div class="error" role="alert">
+                        ❌ ERROR AL CARGAR RESULTADOS<br>
+                        <span style="font-size: 18px; font-weight: 400;">
+                            Por favor, intente nuevamente más tarde.
+                        </span>
+                    </div>
+                `;
+                statsText.textContent = '❌ Error de conexión';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Actualizar estadísticas
+        // ═══════════════════════════════════════════════════════════════
+        function actualizarEstadisticas(total) {
+            const ahora = new Date().toLocaleString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             
-            // Construir el HTML del extracto (los 20 números)
-            const extractoHTML = sorteo.numeros_oficiales.map((num, index) => `
-                <div class="extracto-item"><strong>${index + 1}.</strong> ${num}</div>
-            `).join('');
+            statsText.innerHTML = `
+                📊 <strong>${total}</strong> resultados disponibles<br>
+                🕐 Última actualización: ${ahora}
+            `;
+        }
 
-            // Construir el HTML de las letras (si aplica)
-            const letrasHTML = mostrarLetras ? `
-                <div class="letras-container">
-                    <div class="letras-label">🔤 Letras Oficiales</div>
-                    <div class="letras-text">${sorteo.letras_oficiales.join(' - ')}</div>
-                </div>
-            ` : '';
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Renderizar sorteos
+        // ═══════════════════════════════════════════════════════════════
+        function renderizarSorteos(sorteos) {
+            if (!sorteos || sorteos.length === 0) {
+                sorteosContainer.innerHTML = `
+                    <div class="empty-state" role="status">
+                        🔍 NO SE ENCONTRARON RESULTADOS<br>
+                        <span style="font-size: 18px;">
+                            Intente con otros filtros
+                        </span>
+                    </div>
+                `;
+                return;
+            }
 
-            // Formatear fecha
-            const fechaFormateada = new Date(sorteo.fecha).toLocaleDateString('es-AR', {
+            // Ordenar por fecha descendente y luego por ID descendente
+            const sorteosOrdenados = [...sorteos].sort((a, b) => {
+                const fechaA = new Date(a.fecha);
+                const fechaB = new Date(b.fecha);
+                if (fechaB - fechaA !== 0) return fechaB - fechaA;
+                return b.id - a.id;
+            });
+
+            const html = sorteosOrdenados.map(sorteo => crearTarjetaSorteo(sorteo)).join('');
+            sorteosContainer.innerHTML = html;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Crear tarjeta de sorteo
+        // ═══════════════════════════════════════════════════════════════
+        function crearTarjetaSorteo(sorteo) {
+            const fecha = new Date(sorteo.fecha).toLocaleDateString('es-AR', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
             });
 
-            // Retornar el HTML completo de la tarjeta
+            // Bloque de letras (solo para Ciudad)
+            const letrasHTML = sorteo.letras_oficiales && sorteo.letras_oficiales.length > 0
+                ? `
+                    <div class="letras-container">
+                        <div class="letras-label">🔤 Letras Oficiales:</div>
+                        <div class="letras-list" aria-label="Letras oficiales">${sorteo.letras_oficiales.join(' ')}</div>
+                    </div>
+                `
+                : '';
+
+            // Lista de números (solo primeros 20)
+            const numerosHTML = sorteo.numeros_oficiales && sorteo.numeros_oficiales.length > 0
+                ? sorteo.numeros_oficiales.slice(0, 20).map((num, idx) => `
+                    <div class="numero-item">
+                        <span class="numero-posicion">${idx + 1}.</span>
+                        <span class="numero-valor">${num}</span>
+                    </div>
+                `).join('')
+                : '<div class="empty-state">No hay números disponibles</div>';
+
             return `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="turno">${sorteo.turno}</div>
-                            <div class="jurisdiccion">${sorteo.jurisdiccion}</div>
+                <article class="sorteo-card" role="article" aria-label="${sorteo.turno} - ${sorteo.jurisdiccion}">
+                    <!-- Encabezado -->
+                    <header class="sorteo-header">
+                        <h2 class="sorteo-turno">${sorteo.turno}</h2>
+                        <div class="sorteo-info">
+                            📍 ${sorteo.jurisdiccion}<br>
+                            📅 ${fecha}<br>
+                            🎲 Sorteo #${sorteo.id_sorteo}
                         </div>
-                        <div class="card-meta">
-                            <div class="fecha">📅 ${fechaFormateada}</div>
-                            <div class="sorteo-ids">
-                                <span>ID DB: ${sorteo.id || 'N/A'}</span>
-                                <span>Sorteo: ${sorteo.sorteo_id || sorteo.id_sorteo || 'N/A'}</span>
-                            </div>
+                    </header>
+
+                    <!-- CABEZA - Máxima jerarquía -->
+                    <div class="cabeza-container">
+                        <div class="cabeza-label">🏆 A LA CABEZA:</div>
+                        <div class="cabeza-numero" aria-label="Número ganador a la cabeza: ${sorteo.cabeza}">
+                            ${sorteo.cabeza || '----'}
                         </div>
                     </div>
 
-                    <div class="cabeza-container">
-                        <div class="cabeza-label">🎯 A la Cabeza</div>
-                        <div class="cabeza-numero">${sorteo.cabeza || '---'}</div>
-                    </div>
-                    
+                    <!-- LETRAS (si existen) -->
                     ${letrasHTML}
 
-                    <div class="extracto-grid">
-                        ${extractoHTML}
-                    </div>
-                </div>
-            `;
-        };
-
-        // Función principal para cargar y filtrar los datos
-        window.loadAndFilterResults = async (forceReload = false) => {
-            const selectedTurno = turnoSelector.value;
-            const selectedJurisdiccion = jurisdiccionSelector.value;
-            const sorteoId = sorteoIdInput.value.trim();
-            const fecha = fechaInput.value;
-            
-            // Si allResults está vacío o forceReload, hacer el fetch
-            if (allResults.length === 0 || forceReload) {
-                resultsContainer.innerHTML = '<div class="loading">🎲 Cargando resultados...</div>';
-                try {
-                    const response = await fetch(API_URL);
-                    const data = await response.json();
-
-                    if (data.status === 'ok') {
-                        allResults = data.results;
-                        updateStats(allResults);
-                    } else {
-                        throw new Error(data.details || 'Error desconocido al cargar el JSON.');
-                    }
-                } catch (error) {
-                    resultsContainer.innerHTML = `
-                        <div class="error">
-                            ❌ Error: No se pudo conectar a la API<br>
-                            <small>${error.message}</small>
+                    <!-- LISTA DE 20 NÚMEROS -->
+                    <div class="numeros-container">
+                        <h3 class="numeros-title">📋 Números Oficiales:</h3>
+                        <div class="numeros-list">
+                            ${numerosHTML}
                         </div>
-                    `;
-                    console.error("Fallo al cargar la API:", error);
-                    return;
-                }
-            }
-
-            // Filtrar los resultados
-            const filteredResults = allResults.filter(sorteo => {
-                // Filtro por turno
-                const matchTurno = selectedTurno === 'Todos' || sorteo.turno === selectedTurno;
-                
-                // Filtro por jurisdicción
-                const matchJurisdiccion = selectedJurisdiccion === 'Todas' || 
-                                         sorteo.jurisdiccion === selectedJurisdiccion;
-                
-                // Filtro por sorteo_id
-                const matchSorteoId = !sorteoId || 
-                                     sorteo.sorteo_id == sorteoId || 
-                                     sorteo.id_sorteo == sorteoId;
-                
-                // Filtro por fecha
-                const matchFecha = !fecha || 
-                                  new Date(sorteo.fecha).toISOString().split('T')[0] === fecha;
-                
-                return matchTurno && matchJurisdiccion && matchSorteoId && matchFecha;
-            });
-
-            // Renderizar la UI
-            if (filteredResults.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="loading">
-                        🔍 No se encontraron resultados con los filtros aplicados
                     </div>
-                `;
-            } else {
-                resultsContainer.innerHTML = filteredResults.map(renderCard).join('');
+                </article>
+            `;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Aplicar filtros
+        // ═══════════════════════════════════════════════════════════════
+        function aplicarFiltros() {
+            const jurisdiccionSeleccionada = filtroJurisdiccion.value;
+            const turnoSeleccionado = filtroTurno.value;
+
+            let sorteosFiltrados = todosLosSorteos;
+
+            if (jurisdiccionSeleccionada !== 'all') {
+                sorteosFiltrados = sorteosFiltrados.filter(
+                    s => s.jurisdiccion === jurisdiccionSeleccionada
+                );
             }
 
-            // Actualizar estadísticas con los resultados filtrados
-            updateStats(filteredResults);
-        };
+            if (turnoSeleccionado !== 'all') {
+                sorteosFiltrados = sorteosFiltrados.filter(
+                    s => s.turno === turnoSeleccionado
+                );
+            }
 
-        // Limpiar todos los filtros
-        window.clearFilters = () => {
-            turnoSelector.value = 'Todos';
-            jurisdiccionSelector.value = 'Todas';
-            sorteoIdInput.value = '';
-            fechaInput.value = '';
-            loadAndFilterResults();
-        };
+            renderizarSorteos(sorteosFiltrados);
+            
+            // Anunciar cambio para lectores de pantalla
+            const mensaje = `Mostrando ${sorteosFiltrados.length} resultados`;
+            statsText.innerHTML = `
+                📊 ${mensaje}<br>
+                🕐 ${new Date().toLocaleTimeString('es-AR')}
+            `;
+        }
 
-        // Escuchadores de eventos
-        turnoSelector.addEventListener('change', () => loadAndFilterResults());
-        jurisdiccionSelector.addEventListener('change', () => loadAndFilterResults());
-        sorteoIdInput.addEventListener('input', () => loadAndFilterResults());
-        fechaInput.addEventListener('change', () => loadAndFilterResults());
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Limpiar filtros
+        // ═══════════════════════════════════════════════════════════════
+        function limpiarFiltros() {
+            filtroJurisdiccion.value = 'all';
+            filtroTurno.value = 'all';
+            renderizarSorteos(todosLosSorteos);
+            actualizarEstadisticas(todosLosSorteos.length);
+        }
 
-        // Cargar los datos al iniciar la página
-        loadAndFilterResults();
+        // ═══════════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Filtros
+        filtroJurisdiccion.addEventListener('change', aplicarFiltros);
+        filtroTurno.addEventListener('change', aplicarFiltros);
 
-        // Auto-refresh cada 60 segundos (1 minuto)
-        setInterval(() => {
-            console.log('Auto-refresh de datos...');
-            loadAndFilterResults(true);
-        }, 60000); 
+        // Botones
+        btnActualizar.addEventListener('click', () => {
+            limpiarFiltros();
+            cargarDatos();
+        });
+        
+        btnLimpiar.addEventListener('click', limpiarFiltros);
 
+        // ═══════════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Cargar datos al inicio
+        cargarDatos();
+
+        // Auto-refresh cada 2 minutos
+        setInterval(cargarDatos, 120000);
+
+        // Anunciar para accesibilidad
+        console.log('✅ Interfaz de accesibilidad AAA cargada correctamente');
     </script>
-
 </body>
 </html>
-
