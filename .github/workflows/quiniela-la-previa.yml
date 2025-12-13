@@ -1,0 +1,47 @@
+name: Scraper Quiniela - La Previa
+
+on:
+  schedule:
+    # La Previa: 10:15 AM ARG (13:15 UTC)
+    # Ejecutar 13:14 UTC, sleep 55s, empezar 5s antes del sorteo
+    - cron: '14 13 * * *'
+  workflow_dispatch: # Permite ejecución manual
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: ./scripts
+        run: npm install
+      
+      - name: Wait 55 seconds (start 5s before sorteo)
+        run: |
+          echo "⏳ Esperando 55 segundos para empezar 5s antes del sorteo..."
+          sleep 55
+      
+      - name: Run Scraper - La Previa
+        working-directory: ./scripts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "🎰 Scrapeando La Previa..."
+          node scraper-by-turno.js la-previa
+      
+      - name: Upload logs (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-logs-la-previa
+          path: scripts/*.log
+          retention-days: 7
+

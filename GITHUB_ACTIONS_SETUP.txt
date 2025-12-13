@@ -1,0 +1,98 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                  🤖 GITHUB ACTIONS - SETUP                            ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+✅ 5 WORKFLOWS CREADOS:
+
+  1. quiniela-la-previa.yml    → 10:15 AM ARG (13:14 UTC)
+  2. quiniela-primera.yml       → 12:00 PM ARG (14:59 UTC)
+  3. quiniela-matutina.yml      → 3:00 PM ARG (17:59 UTC)
+  4. quiniela-vespertina.yml    → 6:00 PM ARG (20:59 UTC)
+  5. quiniela-nocturna.yml      → 9:00 PM ARG (23:59 UTC)
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASOS PARA ACTIVAR:
+
+PASO 1: Push a GitHub
+─────────────────────────────────────────────────────────────────────
+git add .
+git commit -m "Add GitHub Actions workflows for automatic scraping"
+git push
+
+
+PASO 2: Configurar SECRET en GitHub
+─────────────────────────────────────────────────────────────────────
+1. Ve a tu repositorio en GitHub
+2. Settings → Secrets and variables → Actions
+3. Click "New repository secret"
+4. Name: DATABASE_URL
+5. Value: postgresql://postgres.vvtujkedjalepkhbycpv:w2uCMg2VbAScCKZS@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+6. Click "Add secret"
+
+
+PASO 3: Test Manual (Opcional)
+─────────────────────────────────────────────────────────────────────
+1. Ve a: Actions tab en GitHub
+2. Selecciona cualquier workflow (ej: "Scraper Quiniela - Nocturna")
+3. Click "Run workflow" → "Run workflow"
+4. Espera 1-2 minutos
+5. Ve a los logs para ver el resultado
+
+
+PASO 4: Verificar en Supabase
+─────────────────────────────────────────────────────────────────────
+1. Ve a https://supabase.com/dashboard/project/vvtujkedjalepkhbycpv
+2. Table Editor → quiniela_resultados
+3. Deberías ver nuevos registros con los resultados
+
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 HORARIOS (Hora Argentina):
+
+  La Previa:   10:15 AM  →  Workflow ejecuta: 10:14 AM
+  Primera:     12:00 PM  →  Workflow ejecuta: 11:59 AM
+  Matutina:     3:00 PM  →  Workflow ejecuta:  2:59 PM
+  Vespertina:   6:00 PM  →  Workflow ejecuta:  5:59 PM
+  Nocturna:     9:00 PM  →  Workflow ejecuta:  8:59 PM
+
+Cada workflow:
+  1. Espera 55 segundos
+  2. Empieza 5 segundos ANTES del sorteo oficial
+  3. Hace retry durante ~3 minutos hasta encontrar datos
+  4. Guarda automáticamente en Supabase
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ CARACTERÍSTICAS:
+
+  • Ejecución automática 5 veces al día
+  • Retry agresivo (20 intentos × 10s = 3.3 minutos)
+  • Scraping de 4 jurisdicciones (Ciudad, BsAs, SantaFe, Cordoba)
+  • Logs detallados en cada ejecución
+  • Upload de logs si falla
+  • Ejecución manual disponible (workflow_dispatch)
+
+═══════════════════════════════════════════════════════════════════════
+
+🔍 MONITOREO:
+
+Ver ejecuciones:
+  https://github.com/[TU_USUARIO]/[TU_REPO]/actions
+
+Ver logs de una ejecución:
+  1. Actions → Click en el workflow
+  2. Click en la ejecución
+  3. Click en "scrape" job
+  4. Ver logs de cada step
+
+═══════════════════════════════════════════════════════════════════════
+
+🎉 ¡LISTO PARA PRODUCCIÓN!
+
+Una vez configurado el secret DATABASE_URL, los scrapers se ejecutarán
+automáticamente todos los días a las horas programadas.
+
+═══════════════════════════════════════════════════════════════════════
+

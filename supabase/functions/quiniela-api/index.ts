@@ -1,27 +1,46 @@
 // @ts-nocheck
 // supabase/functions/quiniela-api/index.ts
 // Endpoint API para obtener los resultados de la Quiniela en formato JSON
+// 
+// ENDPOINTS DISPONIBLES:
+// - GET /quiniela-api → Últimos 80 resultados
+// - GET /quiniela-api?jurisdiccion=ciudad → Filtrar por jurisdicción (40 últimos)
+// - GET /quiniela-api?sorteo_id=51774 → Ese sorteo de TODAS las jurisdicciones
+// - GET /quiniela-api?fecha=2025-12-12 → Todos los sorteos de esa fecha
+// - GET /quiniela-api?fecha=2025-12-12&turno=Nocturna → Sorteo específico de TODAS las jurisdicciones
+// - GET /quiniela-api?fecha_desde=2025-12-10&fecha_hasta=2025-12-12 → Rango de fechas
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import sql from 'npm:postgres@3.4.4'; 
 
-// Las jurisdicciones aceptadas para filtro
-const JURISDICCIONES_VALIDAS: string[] = ['Ciudad', 'BsAs'];
+// Las jurisdicciones que estamos scrapeando actualmente
+const JURISDICCIONES_VALIDAS: string[] = ['Ciudad', 'BsAs', 'SantaFe', 'Cordoba'];
+
+// Mapeo de nombres en minúsculas a nombres correctos en DB
+const JURISDICCION_MAP: Record<string, string> = {
+    'ciudad': 'Ciudad',
+    'bsas': 'BsAs',
+    'santafe': 'SantaFe',
+    'cordoba': 'Cordoba'
+};
+
+// Turnos válidos
+const TURNOS_VALIDOS: string[] = ['La Previa', 'Primera', 'Matutina', 'Vespertina', 'Nocturna'];
 
 // ----------------------------------------------------------------------
 // TIPOS
 // ----------------------------------------------------------------------
 
 interface QuinielaData {
-  id: number;
-  jurisdiccion: string;
-  id_sorteo: number;
-  fecha: string;
-  turno: string;
-  numeros_oficiales: string[];
-  letras_oficiales: string[] | null;
-  cabeza: string | null;
-  created_at: string;
+  id: number;
+  jurisdiccion: string;
+  id_sorteo: number;
+  fecha: string;
+  turno: string;
+  numeros_oficiales: string[];
+  letras_oficiales: string[] | null;
+  cabeza: string | null;
+  created_at: string;
 }
 
 // ----------------------------------------------------------------------
@@ -38,24 +57,37 @@ serve(async (req) => {
     
     // 2. Obtener parámetros de la URL
     const url = new URL(req.url);
-    
-    // ✅ CORRECCIÓN CLAVE: Convertir el filtro a minúsculas inmediatamente
-    const jurisdiccionFilter = url.searchParams.get('jurisdiccion')?.toLowerCase(); 
+    const sorteoId = url.searchParams.get('sorteo_id');
+    const fecha = url.searchParams.get('fecha');
+    const turno = url.searchParams.get('turno');
+    const fechaDesde = url.searchParams.get('fecha_desde');
+    const fechaHasta = url.searchParams.get('fecha_hasta');
+    const jurisdiccionFilter = url.searchParams.get('jurisdiccion')?.toLowerCase();
     
     let dbQuery;
-    const validasLower = JURISDICCIONES_VALIDAS.map(j => j.toLowerCase());
+    let queryDescription = 'all';
 
-    // 3. Construir la consulta SQL
+    // 3. Construir la consulta SQL según los parámetros
     try {
-        // Comparamos el filtro convertido a minúsculas con la lista de válidas (también en minúsculas)
-        if (jurisdiccionFilter && validasLower.includes(jurisdiccionFilter)) {
-            // 🛑 SOLUCIÓN: Mapeamos el filtro en minúsculas al nombre correcto con mayúsculas
-            // que está guardado en la base de datos (evitamos problemas con LOWER() en SQL)
-            const jurisdiccionMap: Record<string, string> = {
-                'ciudad': 'Ciudad',
-                'bsas': 'BsAs'
-            };
-            const jurisdiccionValue = jurisdiccionMap[jurisdiccionFilter];
+        // CASO 1: Consulta por sorteo_id (todas las jurisdicciones)
+        if (sorteoId) {
+            dbQuery = db`
+                select 
+                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                from 
+                    quiniela_resultados
+                where
+                    id_sorteo = ${sorteoId}
+                order by 
+                    jurisdiccion asc;
+            `;
+            queryDescription = `sorteo_id=${sorteoId}`;
+        }
+        
+        // CASO 2: Consulta por fecha + turno (todas las jurisdicciones)
+        else if (fecha && turno) {
+            // Capitalizar turno
+            const turnoCapitalized = turno.charAt(0).toUpperCase() + turno.slice(1).toLowerCase();
             
             dbQuery = db`
                 select 
@@ -63,13 +95,78 @@ serve(async (req) => {
                 from 
                     quiniela_resultados
                 where
-                    jurisdiccion = ${jurisdiccionValue}
+                    fecha = ${fecha}
+                    AND turno = ${turnoCapitalized}
                 order by 
-                    fecha desc, turno desc, created_at desc
-                limit 40;
+                    jurisdiccion asc;
             `;
-        } else {
-            // Consulta completa (sin filtrar, solo por seguridad)
+            queryDescription = `fecha=${fecha}&turno=${turnoCapitalized}`;
+        }
+        
+        // CASO 3: Consulta por fecha (todos los sorteos del día)
+        else if (fecha) {
+            dbQuery = db`
+                select 
+                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                from 
+                    quiniela_resultados
+                where
+                    fecha = ${fecha}
+                order by 
+                    turno desc, jurisdiccion asc;
+            `;
+            queryDescription = `fecha=${fecha}`;
+        }
+        
+        // CASO 4: Consulta por rango de fechas
+        else if (fechaDesde && fechaHasta) {
+            dbQuery = db`
+                select 
+                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                from 
+                    quiniela_resultados
+                where
+                    fecha >= ${fechaDesde}
+                    AND fecha <= ${fechaHasta}
+                order by 
+                    fecha desc, turno desc, jurisdiccion asc
+                limit 200;
+            `;
+            queryDescription = `fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`;
+        }
+        
+        // CASO 5: Consulta por jurisdicción específica
+        else if (jurisdiccionFilter) {
+            const validasLower = JURISDICCIONES_VALIDAS.map(j => j.toLowerCase());
+            
+            if (validasLower.includes(jurisdiccionFilter)) {
+                const jurisdiccionValue = JURISDICCION_MAP[jurisdiccionFilter];
+                
+                dbQuery = db`
+                    select 
+                        id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    from 
+                        quiniela_resultados
+                    where
+                        jurisdiccion = ${jurisdiccionValue}
+                    order by 
+                        fecha desc, turno desc, created_at desc
+                    limit 40;
+                `;
+                queryDescription = `jurisdiccion=${jurisdiccionValue}`;
+            } else {
+                return new Response(JSON.stringify({ 
+                    error: "Jurisdicción inválida",
+                    validas: JURISDICCIONES_VALIDAS.map(j => j.toLowerCase())
+                }), {
+                    status: 400,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+        }
+        
+        // CASO 6: Sin filtros - últimos 80 resultados
+        else {
             dbQuery = db`
                 select 
                     id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
@@ -77,7 +174,7 @@ serve(async (req) => {
                     quiniela_resultados
                 order by 
                     fecha desc, turno desc, created_at desc
-                limit 80; -- Más grande para incluir Ciudad y BsAs
+                limit 80;
             `;
         }
         
@@ -86,21 +183,23 @@ serve(async (req) => {
         // 4. Devolver la respuesta como JSON
         return new Response(JSON.stringify({
             status: 'ok',
+            query: queryDescription,
             total_results: data.length,
-            jurisdiccion_requested: jurisdiccionFilter || 'all',
             results: data
         }), {
             status: 200,
             headers: { 
                 "Content-Type": "application/json",
-                // Habilitar CORS para que tu app React Native pueda acceder
                 "Access-Control-Allow-Origin": "*",
             },
         });
 
     } catch (error) {
         console.error("Error al consultar la DB:", error);
-        return new Response(JSON.stringify({ error: "Fallo en la consulta a la base de datos.", details: error.message }), {
+        return new Response(JSON.stringify({ 
+            error: "Fallo en la consulta a la base de datos.", 
+            details: error instanceof Error ? error.message : String(error)
+        }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });

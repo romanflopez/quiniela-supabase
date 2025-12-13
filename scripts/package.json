@@ -1,0 +1,25 @@
+{
+  "name": "quiniela-scrapers",
+  "version": "2.0.0",
+  "description": "Scrapers modulares para Lotería de la Ciudad - Arquitectura mejorada",
+  "type": "module",
+  "scripts": {
+    "test": "node test-scraper.js",
+    "test:simple": "node test-simple.js",
+    "test:real": "node test-sorteo-real.js",
+    "test:db": "node test-db-completo.js",
+    "scrape:nocturna": "node scraper-by-turno.js nocturna",
+    "scrape:vespertina": "node scraper-by-turno.js vespertina",
+    "scrape:matutina": "node scraper-by-turno.js matutina",
+    "scrape:primera": "node scraper-by-turno.js primera",
+    "scrape:la-previa": "node scraper-by-turno.js la-previa",
+    "scrape:id": "node scraper-by-sorteo-id.js",
+    "scrape:id:v2": "node scraper-by-sorteo-id-v2.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "cheerio": "^1.0.0-rc.12",
+    "postgres": "^3.4.4"
+  }
+}
+

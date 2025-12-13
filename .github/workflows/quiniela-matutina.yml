@@ -1,0 +1,47 @@
+name: Scraper Quiniela - Matutina
+
+on:
+  schedule:
+    # Matutina: 3:00 PM ARG (18:00 UTC)
+    # Ejecutar 17:59 UTC, sleep 55s, empezar 5s antes del sorteo
+    - cron: '59 17 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: ./scripts
+        run: npm install
+      
+      - name: Wait 55 seconds (start 5s before sorteo)
+        run: |
+          echo "⏳ Esperando 55 segundos para empezar 5s antes del sorteo..."
+          sleep 55
+      
+      - name: Run Scraper - Matutina
+        working-directory: ./scripts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "🎰 Scrapeando Matutina..."
+          node scraper-by-turno.js matutina
+      
+      - name: Upload logs (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-logs-matutina
+          path: scripts/*.log
+          retention-days: 7
+
