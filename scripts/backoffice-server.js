@@ -83,7 +83,7 @@ app.post('/api/scrape', (req, res) => {
     console.log(`   Args: ${args.join(', ') || 'ninguno'}`);
     
     // Ejecutar el scraper como proceso hijo
-    const process = spawn('node', [script, ...args], {
+    const childProcess = spawn('node', [script, ...args], {
         cwd: __dirname,
         env: { ...process.env }
     });
@@ -93,7 +93,7 @@ app.post('/api/scrape', (req, res) => {
     let sorteosGuardados = 0;
     
     // Capturar salida estándar
-    process.stdout.on('data', (data) => {
+    childProcess.stdout.on('data', (data) => {
         const output = data.toString();
         stdout += output;
         console.log(output);
@@ -105,14 +105,14 @@ app.post('/api/scrape', (req, res) => {
     });
     
     // Capturar errores
-    process.stderr.on('data', (data) => {
+    childProcess.stderr.on('data', (data) => {
         const output = data.toString();
         stderr += output;
         console.error(output);
     });
     
     // Cuando el proceso termina
-    process.on('close', (code) => {
+    childProcess.on('close', (code) => {
         console.log(`\n✅ Scraper ${name} terminó con código: ${code}`);
         
         if (code === 0) {
@@ -139,7 +139,7 @@ app.post('/api/scrape', (req, res) => {
     });
     
     // Error al iniciar proceso
-    process.on('error', (error) => {
+    childProcess.on('error', (error) => {
         console.error(`❌ Error al ejecutar ${name}:`, error);
         res.status(500).json({
             status: 'error',
