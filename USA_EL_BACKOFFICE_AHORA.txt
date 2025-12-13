@@ -1,0 +1,150 @@
+═══════════════════════════════════════════════════════════════
+   🎰 USA EL BACKOFFICE AHORA - Guía de 3 Pasos
+═══════════════════════════════════════════════════════════════
+
+✅ PROBLEMA DE CORS RESUELTO CON SERVIDOR LOCAL
+
+═══════════════════════════════════════════════════════════════
+   PASO 1: Iniciar el Servidor Backend (30 segundos)
+═══════════════════════════════════════════════════════════════
+
+Opción A - Doble-click (Más fácil):
+   
+   📁 Ir a carpeta: scripts/
+   🖱️ Doble-click en: run-backoffice.cmd
+   
+   Verás una ventana CMD con:
+   ═══════════════════════════════════════════════════════════
+   🎰 BACKOFFICE SERVER - Quiniela Scrapers
+   ═══════════════════════════════════════════════════════════
+   ✅ Servidor corriendo en: http://localhost:3000
+   ...
+   🚀 Listo para recibir requests del backoffice!
+
+Opción B - PowerShell/CMD:
+   
+   cd scripts
+   npm run backoffice
+
+⚠️  IMPORTANTE: DEJA ESTA VENTANA ABIERTA
+
+═══════════════════════════════════════════════════════════════
+   PASO 2: Abrir el Backoffice (5 segundos)
+═══════════════════════════════════════════════════════════════
+
+   🖱️ Doble-click en: backoffice.html
+   
+   Se abrirá en tu navegador predeterminado
+
+═══════════════════════════════════════════════════════════════
+   PASO 3: Ejecutar un Scraper (1 click)
+═══════════════════════════════════════════════════════════════
+
+En el navegador verás 6 cards:
+
+   🔤 Ciudad
+   🌅 La Previa
+   🌄 Primera
+   ☀️ Matutina
+   🌆 Vespertina
+   🌙 Nocturna
+
+1. Click en "▶ Ejecutar Scraper" de cualquiera
+2. El card se pondrá AMARILLO (ejecutando)
+3. Verás logs en tiempo real abajo
+4. Resultado:
+   ✅ Verde = Éxito (datos guardados)
+   ❌ Rojo = Error (ver logs)
+
+═══════════════════════════════════════════════════════════════
+   📊 Ejemplo Real
+═══════════════════════════════════════════════════════════════
+
+Terminal (Servidor):
+   C:\...\scripts> npm run backoffice
+   
+   ═══════════════════════════════════════════════════════════
+   🎰 BACKOFFICE SERVER - Quiniela Scrapers
+   ═══════════════════════════════════════════════════════════
+   ✅ Servidor corriendo en: http://localhost:3000
+   🚀 Listo para recibir requests del backoffice!
+   
+   [esperando requests...]
+
+Navegador (Backoffice):
+   [Click en "▶ Ejecutar Scraper" de Primera]
+   
+   Logs:
+   [21:52:30] 🚀 Iniciando scraper de Primera...
+   [21:52:35] ✅ Primera - Scraping exitoso: 1 sorteo(s) guardado(s)
+   
+   Card Primera: ✅ VERDE (1 sorteo(s) guardado(s))
+
+Terminal (Servidor):
+   🚀 Ejecutando scraper: Primera
+      Script: scraper-by-turno.js
+      Args: primera
+   
+   [logs del scraper...]
+   
+   ✅ Scraper Primera terminó con código: 0
+
+═══════════════════════════════════════════════════════════════
+   ⚡ TIPS RÁPIDOS
+═══════════════════════════════════════════════════════════════
+
+✅ Puedes ejecutar múltiples scrapers seguidos
+✅ Los logs se acumulan (botón "Limpiar Logs" para resetear)
+✅ Cada scraper tarda ~10-30 segundos
+✅ Si falla, simplemente vuelve a intentar
+✅ Ciudad puede fallar más (es normal)
+
+═══════════════════════════════════════════════════════════════
+   ❓ FAQ
+═══════════════════════════════════════════════════════════════
+
+P: ¿Necesito tener el servidor corriendo siempre?
+R: Solo cuando quieras usar el backoffice. Puedes cerrarlo
+   cuando no lo uses.
+
+P: ¿Los GitHub Actions siguen funcionando?
+R: Sí, funcionan INDEPENDIENTEMENTE del backoffice.
+   El backoffice es solo para control manual.
+
+P: ¿Puedo cerrar el navegador?
+R: Sí, cierra cuando quieras. El servidor sigue corriendo.
+   Para cerrar el servidor, cierra la ventana CMD.
+
+P: ¿Qué pasa si ejecuto un scraper que ya corrió hoy?
+R: Se guarda como duplicado o se omite si ya existe
+   (depende de la configuración de la base de datos)
+
+P: Ciudad siempre falla, ¿qué hago?
+R: Normal, Ciudad es problemático. Intentar:
+   • Varias veces seguidas
+   • Esperar unos minutos
+   • O dejarlo a los workflows automáticos
+
+═══════════════════════════════════════════════════════════════
+   🎯 Verificar que Funcionó
+═══════════════════════════════════════════════════════════════
+
+Después de ejecutar un scraper exitosamente:
+
+1. Abrir index.html (el viewer principal)
+2. Refrescar la página
+3. Deberías ver el nuevo sorteo
+4. O ir a Supabase Dashboard → quiniela_resultados
+
+═══════════════════════════════════════════════════════════════
+   🚀 ¡LISTO PARA USAR!
+═══════════════════════════════════════════════════════════════
+
+1. scripts/run-backoffice.cmd → Iniciar servidor
+2. backoffice.html → Abrir en navegador
+3. Click en botones → Ejecutar scrapers
+
+¡Así de simple! 🎉
+
+═══════════════════════════════════════════════════════════════
+
