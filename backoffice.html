@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Quiniela - Panel de Administración</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        /* Grid de Scrapers */
+        .scrapers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .scraper-card {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1f1f2e 100%);
+            border: 3px solid #4a4a6a;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scraper-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ff88;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .scraper-card.running {
+            border-color: #ffd700;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        .scraper-card.success {
+            border-color: #00ff88;
+        }
+
+        .scraper-card.error {
+            border-color: #ff6b6b;
+        }
+
+        .scraper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scraper-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .scraper-icon {
+            font-size: 2em;
+        }
+
+        .scraper-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .scraper-info div {
+            margin-bottom: 8px;
+        }
+
+        .scraper-info strong {
+            color: #00ff88;
+        }
+
+        .scraper-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scraper-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .scraper-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .scraper-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #000;
+        }
+
+        .btn-run:hover {
+            box-shadow: 0 5px 25px rgba(0, 255, 136, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-run:disabled {
+            background: #555;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .scraper-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85em;
+            min-height: 40px;
+        }
+
+        .status-idle {
+            background: rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .status-running {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        /* Panel de Logs */
+        .logs-panel {
+            background: #000;
+            border: 3px solid #4a4a6a;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4a4a6a;
+        }
+
+        .logs-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .logs-clear {
+            padding: 10px 20px;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logs-clear:hover {
+            background: #c92a2a;
+            transform: scale(1.05);
+        }
+
+        .logs-content {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9em;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #4a4a6a;
+            padding-left: 12px;
+        }
+
+        .log-info { color: #00ff88; border-left-color: #00ff88; }
+        .log-error { color: #ff6b6b; border-left-color: #ff6b6b; }
+        .log-warning { color: #ffd700; border-left-color: #ffd700; }
+        .log-success { color: #00ff88; border-left-color: #00ff88; font-weight: 700; }
+
+        .log-timestamp {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scrapers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        /* Scrollbar */
+        .logs-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .logs-content::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        .logs-content::-webkit-scrollbar-thumb {
+            background: #4a4a6a;
+            border-radius: 5px;
+        }
+
+        .logs-content::-webkit-scrollbar-thumb:hover {
+            background: #00ff88;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎰 PANEL DE ADMINISTRACIÓN - QUINIELA</h1>
+            <p>Controla y ejecuta scrapers manualmente</p>
+        </div>
+
+        <div class="scrapers-grid">
+            <!-- Ciudad -->
+            <div class="scraper-card" id="card-ciudad">
+                <div class="scraper-header">
+                    <div class="scraper-title">🔤 Ciudad</div>
+                    <div class="scraper-icon">🎯</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Jurisdicción:</strong> Ciudad (código 51)</div>
+                    <div><strong>Especial:</strong> Incluye 20 letras</div>
+                    <div><strong>Intentos:</strong> 5 con backoff exponencial</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('ciudad')" id="btn-ciudad">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-ciudad">
+                    Listo para ejecutar
+                </div>
+            </div>
+
+            <!-- La Previa -->
+            <div class="scraper-card" id="card-laprevia">
+                <div class="scraper-header">
+                    <div class="scraper-title">🌅 La Previa</div>
+                    <div class="scraper-icon">⏰</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Turno:</strong> La Previa</div>
+                    <div><strong>Horario:</strong> ~10:00 AM ARG</div>
+                    <div><strong>Sorteo ID:</strong> Terminación 1 o 6</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('laprevia')" id="btn-laprevia">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-laprevia">
+                    Listo para ejecutar
+                </div>
+            </div>
+
+            <!-- Primera -->
+            <div class="scraper-card" id="card-primera">
+                <div class="scraper-header">
+                    <div class="scraper-title">🌄 Primera</div>
+                    <div class="scraper-icon">☕</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Turno:</strong> Primera</div>
+                    <div><strong>Horario:</strong> ~12:00 PM ARG</div>
+                    <div><strong>Sorteo ID:</strong> Terminación 2 o 7</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('primera')" id="btn-primera">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-primera">
+                    Listo para ejecutar
+                </div>
+            </div>
+
+            <!-- Matutina -->
+            <div class="scraper-card" id="card-matutina">
+                <div class="scraper-header">
+                    <div class="scraper-title">☀️ Matutina</div>
+                    <div class="scraper-icon">🌤️</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Turno:</strong> Matutina</div>
+                    <div><strong>Horario:</strong> ~03:00 PM ARG</div>
+                    <div><strong>Sorteo ID:</strong> Terminación 3 o 8</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('matutina')" id="btn-matutina">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-matutina">
+                    Listo para ejecutar
+                </div>
+            </div>
+
+            <!-- Vespertina -->
+            <div class="scraper-card" id="card-vespertina">
+                <div class="scraper-header">
+                    <div class="scraper-title">🌆 Vespertina</div>
+                    <div class="scraper-icon">🌇</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Turno:</strong> Vespertina</div>
+                    <div><strong>Horario:</strong> ~06:00 PM ARG</div>
+                    <div><strong>Sorteo ID:</strong> Terminación 4 o 9</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('vespertina')" id="btn-vespertina">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-vespertina">
+                    Listo para ejecutar
+                </div>
+            </div>
+
+            <!-- Nocturna -->
+            <div class="scraper-card" id="card-nocturna">
+                <div class="scraper-header">
+                    <div class="scraper-title">🌙 Nocturna</div>
+                    <div class="scraper-icon">🌃</div>
+                </div>
+                <div class="scraper-info">
+                    <div><strong>Turno:</strong> Nocturna</div>
+                    <div><strong>Horario:</strong> ~09:00 PM ARG</div>
+                    <div><strong>Sorteo ID:</strong> Terminación 5 o 0</div>
+                </div>
+                <button class="scraper-button btn-run" onclick="runScraper('nocturna')" id="btn-nocturna">
+                    <span>▶ Ejecutar Scraper</span>
+                </button>
+                <div class="scraper-status status-idle" id="status-nocturna">
+                    Listo para ejecutar
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Logs -->
+        <div class="logs-panel">
+            <div class="logs-header">
+                <div class="logs-title">📋 Logs en Tiempo Real</div>
+                <button class="logs-clear" onclick="clearLogs()">🗑️ Limpiar Logs</button>
+            </div>
+            <div class="logs-content" id="logs">
+                <div class="log-entry log-info">
+                    <span class="log-timestamp">[00:00:00]</span>
+                    Sistema de backoffice iniciado. Listo para ejecutar scrapers.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const SUPABASE_URL = 'https://vvtujkedjalepkhbycpv.supabase.co';
+        const SCRAPER_FUNCTION = `${SUPABASE_URL}/functions/v1/quiniela-scraper`;
+
+        // Agregar log
+        function addLog(message, type = 'info') {
+            const logsContainer = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                ${message}
+            `;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Limpiar logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            addLog('Logs limpiados');
+        }
+
+        // Actualizar estado del scraper
+        function updateStatus(scraper, status, message) {
+            const card = document.getElementById(`card-${scraper}`);
+            const statusDiv = document.getElementById(`status-${scraper}`);
+            const button = document.getElementById(`btn-${scraper}`);
+
+            // Remover clases anteriores
+            card.classList.remove('running', 'success', 'error');
+            statusDiv.classList.remove('status-idle', 'status-running', 'status-success', 'status-error');
+
+            // Agregar nuevas clases
+            if (status === 'running') {
+                card.classList.add('running');
+                statusDiv.classList.add('status-running');
+                button.disabled = true;
+            } else if (status === 'success') {
+                card.classList.add('success');
+                statusDiv.classList.add('status-success');
+                button.disabled = false;
+            } else if (status === 'error') {
+                card.classList.add('error');
+                statusDiv.classList.add('status-error');
+                button.disabled = false;
+            } else {
+                statusDiv.classList.add('status-idle');
+                button.disabled = false;
+            }
+
+            statusDiv.textContent = message;
+        }
+
+        // Ejecutar scraper
+        async function runScraper(scraper) {
+            const scraperNames = {
+                'ciudad': 'Ciudad',
+                'laprevia': 'La Previa',
+                'primera': 'Primera',
+                'matutina': 'Matutina',
+                'vespertina': 'Vespertina',
+                'nocturna': 'Nocturna'
+            };
+
+            const name = scraperNames[scraper];
+            
+            addLog(`🚀 Iniciando scraper de ${name}...`, 'info');
+            updateStatus(scraper, 'running', '⏳ Ejecutando...');
+
+            try {
+                // Llamar a la Edge Function de Supabase
+                const response = await fetch(SCRAPER_FUNCTION, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        turno: scraper,
+                        manual: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'ok') {
+                    addLog(`✅ ${name} - Scraping exitoso: ${data.sorteos_guardados} sorteos guardados`, 'success');
+                    updateStatus(scraper, 'success', `✅ ${data.sorteos_guardados} sorteos guardados`);
+                } else {
+                    throw new Error(data.details || 'Error desconocido');
+                }
+
+            } catch (error) {
+                addLog(`❌ ${name} - Error: ${error.message}`, 'error');
+                updateStatus(scraper, 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        // Mensaje de bienvenida
+        window.addEventListener('load', () => {
+            addLog('🎰 Backoffice de Quiniela cargado correctamente', 'success');
+            addLog('💡 Usa los botones para ejecutar scrapers manualmente', 'info');
+        });
+    </script>
+
+</body>
+</html>
+
