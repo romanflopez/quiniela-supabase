@@ -252,8 +252,9 @@ async function main(sorteoInicial = null, maxIntentos = 10) {
     log('📅', `Fecha: ${fecha}`);
     
     // Sorteo inicial (si no se especifica, usar un ID reciente)
-    // Los últimos sorteos que vimos son: 51776, 51777, 51778, 51779
-    let sorteoId = sorteoInicial || 51780;  // Empezar desde el siguiente sorteo disponible
+    // Último sorteo confirmado válido: 51779 (13/12/2024)
+    // Empezamos desde un sorteo anterior para capturar cualquier sorteo reciente que falte
+    let sorteoId = sorteoInicial || 51770;  // Empezar desde 9 sorteos atrás
     log('🎯', `Sorteo inicial: ${sorteoId}`);
     log('🔄', `Máximo de intentos: ${maxIntentos}\n`);
     
