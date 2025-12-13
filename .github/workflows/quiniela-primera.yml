@@ -45,3 +45,4 @@ jobs:
           path: scripts/*.log
           retention-days: 7
 
+

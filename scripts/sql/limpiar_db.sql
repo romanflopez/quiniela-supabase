@@ -15,3 +15,4 @@ SELECT COUNT(*) as "Registros después de limpiar" FROM quiniela_resultados;
 -- Opcional: Resetear el autoincrement del ID
 -- ALTER SEQUENCE quiniela_resultados_id_seq RESTART WITH 1;
 
+

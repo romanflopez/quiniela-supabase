@@ -71,3 +71,4 @@ export function log(emoji, message) {
     console.log(`[${now}] ${emoji} ${message}`);
 }
 
+
