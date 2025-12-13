@@ -410,9 +410,11 @@ serve(async (req) => {
         });
         
     } catch (e) { 
-        console.error('Error:', e);
+        console.error('❌ Error crítico:', e);
+        const errorMessage = e instanceof Error ? e.message : String(e);
         return new Response(JSON.stringify({ 
-            error: e.message 
+            error: errorMessage,
+            details: e instanceof Error ? e.stack : undefined
         }), { 
             status: 500,
             headers: { "Content-Type": "application/json" }
