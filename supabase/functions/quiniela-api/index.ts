@@ -229,7 +229,17 @@ serve(async (req) => {
                     limit 10
                 )
                 order by 
-                    fecha desc, turno desc, created_at desc
+                    fecha desc, 
+                    CASE turno 
+                        WHEN 'Nocturna' THEN 1
+                        WHEN 'Vespertina' THEN 2
+                        WHEN 'Matutina' THEN 3
+                        WHEN 'Primera' THEN 4
+                        WHEN 'La Previa' THEN 5
+                        WHEN 'Poceada' THEN 6
+                        ELSE 7
+                    END,
+                    created_at desc
                 limit 80;
             `;
         }
