@@ -11,7 +11,7 @@ export const JURISDICCIONES = {
     'BsAs': '53',
     'SantaFe': '72',
     'Cordoba': '55',
-    // 'EntreRios': '52',   // ⚠️ Deshabilitado: pocos datos
+    'EntreRios': '52',   // Puede no tener datos siempre, pero lo intentamos
     // 'Uruguay': '54',     // ⚠️ Deshabilitado: pocos datos
 };
 

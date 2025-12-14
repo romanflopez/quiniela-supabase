@@ -416,6 +416,7 @@
             <option value="BsAs">BUENOS AIRES</option>
             <option value="SantaFe">SANTA FE</option>
             <option value="Cordoba">CÓRDOBA</option>
+            <option value="EntreRios">ENTRE RÍOS</option>
         </select>
 
         <label for="filtro-turno" class="filtro-label">
@@ -572,18 +573,24 @@
             });
 
             // Bloque de letras (solo para Ciudad)
-            const letrasHTML = sorteo.letras_oficiales && sorteo.letras_oficiales.length > 0
+            // Las letras vienen como array JSON desde la DB
+            const letrasArray = Array.isArray(sorteo.letras) ? sorteo.letras : 
+                               (typeof sorteo.letras === 'string' ? JSON.parse(sorteo.letras) : []);
+            const letrasHTML = letrasArray && letrasArray.length > 0
                 ? `
                     <div class="letras-container">
                         <div class="letras-label">🔤 Letras Oficiales:</div>
-                        <div class="letras-list" aria-label="Letras oficiales">${sorteo.letras_oficiales.join(' ')}</div>
+                        <div class="letras-list" aria-label="Letras oficiales">${letrasArray.join(' ')}</div>
                     </div>
                 `
                 : '';
 
             // Lista de números (solo primeros 20)
-            const numerosHTML = sorteo.numeros_oficiales && sorteo.numeros_oficiales.length > 0
-                ? sorteo.numeros_oficiales.slice(0, 20).map((num, idx) => `
+            // Los números vienen como array JSON desde la DB
+            const numerosArray = Array.isArray(sorteo.numeros) ? sorteo.numeros : 
+                                 (typeof sorteo.numeros === 'string' ? JSON.parse(sorteo.numeros) : []);
+            const numerosHTML = numerosArray && numerosArray.length > 0
+                ? numerosArray.slice(0, 20).map((num, idx) => `
                     <div class="numero-item">
                         <span class="numero-posicion">${idx + 1}.</span>
                         <span class="numero-valor">${num}</span>
@@ -599,7 +606,7 @@
                         <div class="sorteo-info">
                             📍 ${sorteo.jurisdiccion}<br>
                             📅 ${fecha}<br>
-                            🎲 Sorteo #${sorteo.id_sorteo}
+                            🎲 Sorteo #${sorteo.sorteo_id || sorteo.id_sorteo || 'N/A'}
                         </div>
                     </header>
 

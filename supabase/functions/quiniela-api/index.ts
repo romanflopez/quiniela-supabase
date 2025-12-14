@@ -14,14 +14,15 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import sql from 'npm:postgres@3.4.4'; 
 
 // Las jurisdicciones que estamos scrapeando actualmente
-const JURISDICCIONES_VALIDAS: string[] = ['Ciudad', 'BsAs', 'SantaFe', 'Cordoba'];
+const JURISDICCIONES_VALIDAS: string[] = ['Ciudad', 'BsAs', 'SantaFe', 'Cordoba', 'EntreRios'];
 
 // Mapeo de nombres en minúsculas a nombres correctos en DB
 const JURISDICCION_MAP: Record<string, string> = {
     'ciudad': 'Ciudad',
     'bsas': 'BsAs',
     'santafe': 'SantaFe',
-    'cordoba': 'Cordoba'
+    'cordoba': 'Cordoba',
+    'entrerios': 'EntreRios'
 };
 
 // Turnos válidos

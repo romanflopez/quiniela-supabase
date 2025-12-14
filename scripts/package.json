@@ -4,20 +4,16 @@
   "description": "Scrapers modulares para Lotería de la Ciudad - Arquitectura mejorada",
   "type": "module",
   "scripts": {
-    "test": "node test-scraper.js",
-    "test:simple": "node test-simple.js",
-    "test:real": "node test-sorteo-real.js",
-    "test:db": "node test-db-completo.js",
-    "test:ciudad": "node test-ciudad.js",
     "scrape:nocturna": "node scraper-by-turno.js nocturna",
     "scrape:vespertina": "node scraper-by-turno.js vespertina",
     "scrape:matutina": "node scraper-by-turno.js matutina",
     "scrape:primera": "node scraper-by-turno.js primera",
     "scrape:la-previa": "node scraper-by-turno.js la-previa",
-    "scrape:ciudad": "node scraper-ciudad.js",
-    "scrape:id": "node scraper-by-sorteo-id.js",
-    "scrape:id:v2": "node scraper-by-sorteo-id-v2.js",
-    "backoffice": "node backoffice-server.js"
+    "test": "node tests/test-all.js",
+    "test:parsing": "node tests/test-parsing.js",
+    "test:utils": "node tests/test-utils.js",
+    "test:database": "node tests/test-database.js",
+    "test:metrics": "node tests/test-metrics.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
