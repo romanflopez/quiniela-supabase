@@ -48,26 +48,40 @@ export async function guardarResultado(resultado) {
     const sql = initDB();
     
     try {
-        await sql`
-            INSERT INTO quiniela_resultados 
-                (jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza)
-            VALUES 
-                (${resultado.jurisdiccion}, ${resultado.sorteo_id}, ${resultado.fecha}, ${resultado.turno}, 
-                 ${resultado.numeros}, ${resultado.letras}, ${resultado.cabeza})
-            ON CONFLICT (jurisdiccion, sorteo_id) 
-            DO UPDATE SET
-                fecha = EXCLUDED.fecha,
-                turno = EXCLUDED.turno,
-                numeros = EXCLUDED.numeros,
-                letras = EXCLUDED.letras,
-                cabeza = EXCLUDED.cabeza
-        `;
+        // Primero verificar si ya existe
+        const existe = await existeResultado(resultado.jurisdiccion, resultado.sorteo_id);
         
-        log('💾', `Guardado: ${resultado.jurisdiccion} - ${resultado.turno} (${resultado.fecha})`);
+        if (existe) {
+            // Actualizar si existe
+            await sql`
+                UPDATE quiniela_resultados 
+                SET 
+                    fecha = ${resultado.fecha},
+                    turno = ${resultado.turno},
+                    numeros = ${resultado.numeros},
+                    letras = ${resultado.letras},
+                    cabeza = ${resultado.cabeza}
+                WHERE jurisdiccion = ${resultado.jurisdiccion}
+                AND sorteo_id = ${resultado.sorteo_id}
+            `;
+            log('🔄', `Actualizado: ${resultado.jurisdiccion} - ${resultado.sorteo_id}`);
+        } else {
+            // Insertar si no existe
+            await sql`
+                INSERT INTO quiniela_resultados 
+                    (jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza)
+                VALUES 
+                    (${resultado.jurisdiccion}, ${resultado.sorteo_id}, ${resultado.fecha}, ${resultado.turno}, 
+                     ${resultado.numeros}, ${resultado.letras}, ${resultado.cabeza})
+            `;
+            log('💾', `Guardado: ${resultado.jurisdiccion} - ${resultado.turno} (${resultado.fecha})`);
+        }
+        
         return true;
         
     } catch (error) {
         log('❌', `Error guardando ${resultado.jurisdiccion}: ${error.message}`);
+        console.error('Detalles del error:', error);
         return false;
     }
 }
@@ -109,8 +123,7 @@ export async function existeResultado(jurisdiccion, sorteoId, fecha) {
             SELECT id 
             FROM quiniela_resultados 
             WHERE jurisdiccion = ${jurisdiccion} 
-            AND id_sorteo = ${sorteoId}
-            AND fecha = ${fecha}
+            AND sorteo_id = ${sorteoId}
             LIMIT 1
         `;
         
