@@ -112,8 +112,17 @@ export async function scrapearConRetry(sorteoId, fecha, options = {}) {
     
     log('🎰', `Retry Strategy: ${maxIntentos} intentos, ${delayEntreIntentos/1000}s entre intentos`);
     
+    // Importar función para invalidar cache si es necesario
+    const { invalidarCacheSorteos } = await import('./lotba-api.js');
+    
     for (let intento = 1; intento <= maxIntentos; intento++) {
         log('🔄', `Intento ${intento}/${maxIntentos}`);
+        
+        // Invalidar cache cada 3 intentos para asegurar datos frescos
+        if (intento > 1 && intento % 3 === 0) {
+            log('🔄', 'Invalidando cache de sorteos para obtener datos frescos...');
+            invalidarCacheSorteos();
+        }
         
         const resultados = await scrapearTodasJurisdicciones(sorteoId, fecha, delayEntreJur);
         

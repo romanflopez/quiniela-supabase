@@ -10,16 +10,25 @@ const LOTBA_PAGE_URL = 'https://quiniela.loteriadelaciudad.gob.ar/';
 const LOTBA_API_URL = 'https://quiniela.loteriadelaciudad.gob.ar/resultadosQuiniela/consultaResultados.php';
 const CODIGO_FIJO = '0080';
 
-// Cache de sorteos (se invalida después de 5 minutos)
+// Cache de sorteos (se invalida cuando detecta un sorteo nuevo o después de 2 minutos)
 let sorteosCache = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+let ultimoSorteoIdCache = null;
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutos (más corto porque los sorteos cambian a horas fijas)
 
 /**
- * Obtener lista de sorteos disponibles desde la página principal (con cache)
+ * Obtener lista de sorteos disponibles desde la página principal (con cache inteligente)
+ * @param {boolean} forceRefresh - Forzar refresh del cache
  * @returns {Array} Array de {id, fecha, turno}
  */
-export async function obtenerSorteosDisponibles() {
+export async function obtenerSorteosDisponibles(forceRefresh = false) {
+    // Si se fuerza refresh, invalidar cache
+    if (forceRefresh) {
+        sorteosCache = null;
+        cacheTimestamp = 0;
+        ultimoSorteoIdCache = null;
+    }
+    
     // Usar cache si está disponible y no expiró
     const now = Date.now();
     if (sorteosCache && (now - cacheTimestamp) < CACHE_TTL) {
@@ -58,9 +67,19 @@ export async function obtenerSorteosDisponibles() {
         
         log('✅', `${sorteos.length} sorteos disponibles encontrados`);
         
+        // Detectar si hay un sorteo nuevo (el primero es siempre el más reciente)
+        const sorteoMasReciente = sorteos.length > 0 ? sorteos[0].id : null;
+        const haySorteoNuevo = ultimoSorteoIdCache && sorteoMasReciente && sorteoMasReciente !== ultimoSorteoIdCache;
+        
+        // Invalidar cache si hay un sorteo nuevo (cambió el sorteo más reciente)
+        if (haySorteoNuevo) {
+            log('🔄', `Nuevo sorteo detectado (${sorteoMasReciente}), cache invalidado`);
+        }
+        
         // Guardar en cache
         sorteosCache = sorteos;
         cacheTimestamp = Date.now();
+        ultimoSorteoIdCache = sorteoMasReciente;
         
         return sorteos;
         
@@ -76,6 +95,7 @@ export async function obtenerSorteosDisponibles() {
 export function invalidarCacheSorteos() {
     sorteosCache = null;
     cacheTimestamp = 0;
+    ultimoSorteoIdCache = null;
 }
 
 /**
