@@ -9,6 +9,7 @@
     "scrape:matutina": "node scraper-by-turno.js matutina",
     "scrape:primera": "node scraper-by-turno.js primera",
     "scrape:la-previa": "node scraper-by-turno.js la-previa",
+    "scrape:poceada": "node scraper-poceada.js",
     "test": "node tests/test-all.js",
     "test:parsing": "node tests/test-parsing.js",
     "test:utils": "node tests/test-utils.js",

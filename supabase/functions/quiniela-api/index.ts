@@ -16,6 +16,9 @@ import sql from 'npm:postgres@3.4.4';
 // Las jurisdicciones que estamos scrapeando actualmente
 const JURISDICCIONES_VALIDAS: string[] = ['Ciudad', 'BsAs', 'SantaFe', 'Cordoba', 'EntreRios'];
 
+// Turnos válidos (incluye Poceada)
+const TURNOS_VALIDOS: string[] = ['La Previa', 'Primera', 'Matutina', 'Vespertina', 'Nocturna', 'Poceada'];
+
 // Mapeo de nombres en minúsculas a nombres correctos en DB
 const JURISDICCION_MAP: Record<string, string> = {
     'ciudad': 'Ciudad',
