@@ -236,6 +236,7 @@ serve(async (req) => {
                 queryDescription = 'juego=quiniela';
             } else if (juego === 'poceada') {
                 // Solo Poceada
+                console.log('🔍 Ejecutando consulta de Poceada...');
                 dbQuery = db`
                     select 
                         id, 
@@ -254,6 +255,7 @@ serve(async (req) => {
                     limit 30;
                 `;
                 queryDescription = 'juego=poceada';
+                console.log('✅ Consulta de Poceada construida');
             } else {
                 // Ambos (comportamiento por defecto)
                 dbQuery = db`
@@ -309,9 +311,13 @@ serve(async (req) => {
             }
         }
         
+        console.log(`⏳ Ejecutando query: ${queryDescription}...`);
         const data: QuinielaData[] = await dbQuery;
         
         console.log(`✅ Query ejecutada: ${queryDescription}, resultados: ${data.length}`);
+        if (data.length > 0) {
+            console.log(`📋 Primer resultado: ${JSON.stringify(data[0])}`);
+        }
 
         // 4. Devolver la respuesta como JSON
         return new Response(JSON.stringify({
