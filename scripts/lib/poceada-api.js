@@ -52,23 +52,32 @@ export async function obtenerSorteosDisponibles() {
 }
 
 /**
- * Obtener ID de sorteo de Poceada de hoy
- * @returns {string|null} ID del sorteo de hoy o null
+ * Obtener ID de sorteo de Poceada de hoy (o el más reciente disponible)
+ * @returns {string|null} ID del sorteo o null
  */
 export async function obtenerSorteoIdHoy() {
     try {
         const sorteos = await obtenerSorteosDisponibles();
-        const hoy = getTodayDateArg();
         
-        const sorteoHoy = sorteos.find(s => s.fecha === hoy);
-        
-        if (sorteoHoy) {
-            log('✅', `Sorteo de Poceada de hoy encontrado: ${sorteoHoy.id}`);
-            return sorteoHoy.id;
+        if (sorteos.length === 0) {
+            log('⚠️', 'No se encontraron sorteos de Poceada disponibles');
+            return null;
         }
         
-        log('⚠️', `No se encontró sorteo de Poceada de hoy (${hoy})`);
-        return null;
+        const hoy = getTodayDateArg();
+        
+        // Buscar sorteo de hoy
+        let sorteoHoy = sorteos.find(s => s.fecha === hoy);
+        
+        // Si no hay de hoy, usar el más reciente
+        if (!sorteoHoy) {
+            sorteoHoy = sorteos[0]; // El primero es el más reciente
+            log('⚠️', `No hay sorteo de Poceada de hoy (${hoy}), usando el más reciente: ${sorteoHoy.fecha}`);
+        } else {
+            log('✅', `Sorteo de Poceada de hoy encontrado: ${sorteoHoy.id}`);
+        }
+        
+        return sorteoHoy.id;
         
     } catch (error) {
         log('❌', `Error obteniendo sorteo de Poceada: ${error.message}`);

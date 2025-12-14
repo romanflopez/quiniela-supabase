@@ -3,8 +3,8 @@
 // Poceada usa los números de la última Quiniela de la Ciudad del día
 // ═══════════════════════════════════════════════════════════════════
 
-import { obtenerSorteoIdHoy } from './lib/poceada-api.js';
-import { obtenerSorteoIdDeHoy } from './lib/lotba-api.js';
+import { obtenerSorteoIdHoy, obtenerSorteosDisponibles } from './lib/poceada-api.js';
+import { obtenerSorteosDisponibles as obtenerSorteosQuiniela } from './lib/lotba-api.js';
 import { scrapearSorteo } from './lib/scraper-core.js';
 import { mapearQuinielaAPoceada } from './lib/data-mapper.js';
 import { guardarResultadoPoceada } from './lib/poceada-db.js';
@@ -29,21 +29,31 @@ async function main() {
         const poceadaSorteoId = await obtenerSorteoIdHoy();
         
         if (!poceadaSorteoId) {
-            log('❌', 'No se encontró sorteo de hoy para Poceada');
+            log('❌', 'No se encontró sorteo de Poceada disponible');
             process.exit(1);
         }
         
-        log('✅', `Poceada Sorteo ID: ${poceadaSorteoId}`);
+        // Obtener la fecha del sorteo de Poceada
+        const sorteosPoceada = await obtenerSorteosDisponibles();
+        const sorteoPoceada = sorteosPoceada.find(s => s.id === poceadaSorteoId);
+        const fechaPoceada = sorteoPoceada ? sorteoPoceada.fecha : fecha;
         
-        // 2. Obtener sorteo de Quiniela Ciudad del día (último turno = Nocturna)
-        log('📋', 'Obteniendo sorteo de Quiniela Ciudad (Nocturna)...');
-        const quinielaSorteoId = await obtenerSorteoIdDeHoy('nocturna');
+        log('✅', `Poceada Sorteo ID: ${poceadaSorteoId} - Fecha: ${fechaPoceada}`);
         
-        if (!quinielaSorteoId) {
-            log('❌', 'No se encontró sorteo de Quiniela Ciudad del día');
+        // 2. Obtener sorteo de Quiniela Ciudad del mismo día (último turno = Nocturna)
+        log('📋', `Obteniendo sorteo de Quiniela Ciudad (Nocturna) para fecha ${fechaPoceada}...`);
+        
+        // Importar función para obtener sorteos de Quiniela
+        const { obtenerSorteosDisponibles: obtenerSorteosQuiniela } = await import('./lib/lotba-api.js');
+        const sorteosQuiniela = await obtenerSorteosQuiniela();
+        const sorteoQuiniela = sorteosQuiniela.find(s => s.fecha === fechaPoceada && (s.id.endsWith('5') || s.id.endsWith('0')));
+        
+        if (!sorteoQuiniela) {
+            log('❌', `No se encontró sorteo de Quiniela Ciudad Nocturna para fecha ${fechaPoceada}`);
             process.exit(1);
         }
         
+        const quinielaSorteoId = sorteoQuiniela.id;
         log('✅', `Quiniela Ciudad Sorteo ID: ${quinielaSorteoId}`);
         
         // 3. Scrapear Quiniela Ciudad con retry
@@ -97,7 +107,7 @@ async function main() {
             const guardado = await guardarResultadoPoceada(resultadoPoceada);
             
             if (guardado) {
-                log('✅', `Resultado guardado: Poceada (${fecha})`);
+                log('✅', `Resultado guardado: Poceada (${fechaPoceada})`);
             } else {
                 log('❌', 'Error al guardar resultado');
                 process.exit(1);
