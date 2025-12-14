@@ -3,15 +3,12 @@
 // Poceada usa los números de la última Quiniela de la Ciudad del día
 // ═══════════════════════════════════════════════════════════════════
 
-import { obtenerSorteoIdHoy, obtenerSorteosDisponibles } from './lib/poceada-api.js';
-import { obtenerSorteosDisponibles as obtenerSorteosQuiniela } from './lib/lotba-api.js';
-import { scrapearSorteo } from './lib/scraper-core.js';
-import { mapearQuinielaAPoceada } from './lib/data-mapper.js';
+import { obtenerSorteoIdHoy, obtenerSorteosDisponibles, fetchResultadoPoceadaHTML, extraerResultadosPoceada } from './lib/poceada-api.js';
 import { guardarResultadoPoceada } from './lib/poceada-db.js';
 import { closeDB } from './lib/database.js';
 import { sleep, getTodayDateArg, log } from './lib/utils.js';
 import { crearMetrics } from './lib/metrics.js';
-import { FEATURES } from './config.js';
+import { FEATURES, VALIDACIONES } from './config.js';
 
 async function main() {
     log('🎰', '══════════════════════════════════════════════════════');
@@ -40,67 +37,66 @@ async function main() {
         
         log('✅', `Poceada Sorteo ID: ${poceadaSorteoId} - Fecha: ${fechaPoceada}`);
         
-        // 2. Obtener sorteo de Quiniela Ciudad del mismo día (último turno = Nocturna)
-        log('📋', `Obteniendo sorteo de Quiniela Ciudad (Nocturna) para fecha ${fechaPoceada}...`);
-        
-        // Usar función ya importada al inicio del archivo
-        const sorteosQuiniela = await obtenerSorteosQuiniela();
-        const sorteoQuiniela = sorteosQuiniela.find(s => s.fecha === fechaPoceada && (s.id.endsWith('5') || s.id.endsWith('0')));
-        
-        if (!sorteoQuiniela) {
-            log('❌', `No se encontró sorteo de Quiniela Ciudad Nocturna para fecha ${fechaPoceada}`);
-            process.exit(1);
-        }
-        
-        const quinielaSorteoId = sorteoQuiniela.id;
-        log('✅', `Quiniela Ciudad Sorteo ID: ${quinielaSorteoId}`);
-        
-        // 3. Scrapear Quiniela Ciudad con retry
-        let resultadoQuiniela = null;
+        // 2. Scrapear resultado de Poceada directamente desde su página
+        let resultadoPoceada = null;
         const maxIntentos = 20;
         
         for (let intento = 1; intento <= maxIntentos; intento++) {
-            log('🔄', `Intento ${intento}/${maxIntentos} - Scrapeando Quiniela Ciudad...`);
+            log('🔄', `Intento ${intento}/${maxIntentos} - Scrapeando Poceada...`);
             
             metrics.registrarIntento();
             const inicio = Date.now();
             
-            resultadoQuiniela = await scrapearSorteo('Ciudad', quinielaSorteoId, fechaPoceada);
+            // Obtener HTML de Poceada (intenta desde la página principal con el sorteo seleccionado)
+            const html = await fetchResultadoPoceadaHTML(poceadaSorteoId);
             
-            const tiempo = Date.now() - inicio;
-            
-            if (resultadoQuiniela) {
-                metrics.registrarExito('Quiniela Ciudad', tiempo);
-                log('✅', `Quiniela Ciudad - Sorteo ${quinielaSorteoId} - Cabeza: ${resultadoQuiniela.cabeza}`);
-                break;
-            } else {
-                metrics.registrarFallo('Quiniela Ciudad');
+            if (!html) {
+                metrics.registrarFallo('Poceada');
                 log('⚠️', `Intento ${intento} falló, reintentando...`);
                 
                 if (intento < maxIntentos) {
                     await sleep(10000);
                 }
+                continue;
             }
+            
+            // Extraer números y letras
+            const { numeros, letras } = extraerResultadosPoceada(html);
+            
+            // Validar que tengamos los números esperados (Poceada tiene 20 números de 2 dígitos)
+            if (numeros.length !== VALIDACIONES.NUMEROS_ESPERADOS) {
+                metrics.registrarFallo('Poceada');
+                log('⚠️', `Solo ${numeros.length} números (esperados ${VALIDACIONES.NUMEROS_ESPERADOS}), reintentando...`);
+                
+                if (intento < maxIntentos) {
+                    await sleep(10000);
+                }
+                continue;
+            }
+            
+            // Construir resultado
+            resultadoPoceada = {
+                sorteo_id: String(poceadaSorteoId),
+                fecha: fechaPoceada,
+                turno: 'Poceada',
+                numeros,
+                letras,
+                cabeza: numeros[0] || null
+            };
+            
+            const tiempo = Date.now() - inicio;
+            metrics.registrarExito('Poceada', tiempo);
+            log('✅', `Poceada - Sorteo ${poceadaSorteoId} - Cabeza: ${resultadoPoceada.cabeza} - Números: ${numeros.length}`);
+            break;
         }
         
-        if (!resultadoQuiniela) {
-            log('❌', `No se pudo obtener resultado de Quiniela Ciudad después de ${maxIntentos} intentos`);
+        if (!resultadoPoceada) {
+            log('❌', `No se pudo obtener resultado de Poceada después de ${maxIntentos} intentos`);
             metrics.imprimirReporte();
             process.exit(1);
         }
         
-        // 4. Mapear resultado de Quiniela a Poceada
-        log('🔄', 'Mapeando resultado de Quiniela a Poceada...');
-        const resultadoPoceada = mapearQuinielaAPoceada(resultadoQuiniela, poceadaSorteoId);
-        
-        if (!resultadoPoceada) {
-            log('❌', 'Error al mapear resultado de Quiniela a Poceada');
-            process.exit(1);
-        }
-        
-        log('✅', `Poceada - Sorteo ${poceadaSorteoId} - Cabeza: ${resultadoPoceada.cabeza}`);
-        
-        // 5. Guardar en DB
+        // 3. Guardar en DB
         if (FEATURES.SAVE_TO_DB) {
             log('💾', 'Guardando resultado en DB...');
             const guardado = await guardarResultadoPoceada(resultadoPoceada);

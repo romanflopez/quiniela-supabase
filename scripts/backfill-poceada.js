@@ -5,12 +5,10 @@
 // Ejemplo: node scripts/backfill-poceada.js 7
 // ═══════════════════════════════════════════════════════════════════
 
-import { obtenerSorteosDisponibles as obtenerSorteosPoceada } from './lib/poceada-api.js';
-import { obtenerSorteosDisponibles as obtenerSorteosQuiniela } from './lib/lotba-api.js';
-import { scrapearSorteo } from './lib/scraper-core.js';
-import { mapearQuinielaAPoceada } from './lib/data-mapper.js';
+import { obtenerSorteosDisponibles as obtenerSorteosPoceada, fetchResultadoPoceadaHTML, extraerResultadosPoceada } from './lib/poceada-api.js';
 import { guardarResultadoPoceada, closeDB } from './lib/poceada-db.js';
 import { sleep, getTodayDateArg, getDateDaysAgo, log } from './lib/utils.js';
+import { VALIDACIONES } from './config.js';
 
 const DIAS_ATRAS = parseInt(process.argv[2]) || 7;
 
@@ -44,15 +42,6 @@ async function main() {
             process.exit(0);
         }
         
-        // 3. Obtener sorteos de Quiniela para mapear
-        log('📋', 'Obteniendo sorteos de Quiniela Ciudad...');
-        const sorteosQuiniela = await obtenerSorteosQuiniela();
-        
-        if (sorteosQuiniela.length === 0) {
-            log('❌', 'No se encontraron sorteos de Quiniela disponibles');
-            process.exit(1);
-        }
-        
         console.log('');
         log('🚀', 'Iniciando backfill de Poceada...\n');
         
@@ -67,39 +56,36 @@ async function main() {
             
             log('🔍', `${progreso} Poceada Sorteo ${sorteoPoceada.id} - ${sorteoPoceada.fecha}`);
             
-            // Buscar sorteo de Quiniela Ciudad Nocturna del mismo día
-            const sorteoQuiniela = sorteosQuiniela.find(s => 
-                s.fecha === sorteoPoceada.fecha && 
-                (s.id.endsWith('5') || s.id.endsWith('0'))
-            );
+            // Scrapear resultado de Poceada directamente (usa código 0082 y jurisdicción 51)
+            const html = await fetchResultadoPoceadaHTML(sorteoPoceada.id);
             
-            if (!sorteoQuiniela) {
-                log('  ⚠️', `No se encontró sorteo de Quiniela Ciudad Nocturna para fecha ${sorteoPoceada.fecha}`);
+            if (!html) {
+                log('  ⚠️', `No se pudo obtener HTML de Poceada`);
                 totalErrores++;
                 continue;
             }
             
-            log('  📋', `Quiniela Ciudad Sorteo ID: ${sorteoQuiniela.id}`);
+            // Extraer números y letras
+            const { numeros, letras } = extraerResultadosPoceada(html);
             
-            // Scrapear Quiniela Ciudad
-            const resultadoQuiniela = await scrapearSorteo('Ciudad', sorteoQuiniela.id, sorteoPoceada.fecha);
-            
-            if (!resultadoQuiniela) {
-                log('  ⚠️', `No se pudo obtener resultado de Quiniela Ciudad`);
+            // Validar que tengamos los números esperados
+            if (numeros.length !== VALIDACIONES.NUMEROS_ESPERADOS) {
+                log('  ⚠️', `Solo ${numeros.length} números (esperados ${VALIDACIONES.NUMEROS_ESPERADOS})`);
                 totalErrores++;
                 continue;
             }
             
-            log('  ✅', `Quiniela Ciudad - Cabeza: ${resultadoQuiniela.cabeza}`);
+            // Construir resultado
+            const resultadoPoceada = {
+                sorteo_id: String(sorteoPoceada.id),
+                fecha: sorteoPoceada.fecha,
+                turno: 'Poceada',
+                numeros,
+                letras,
+                cabeza: numeros[0] || null
+            };
             
-            // Mapear a Poceada
-            const resultadoPoceada = mapearQuinielaAPoceada(resultadoQuiniela, sorteoPoceada.id);
-            
-            if (!resultadoPoceada) {
-                log('  ⚠️', `Error al mapear resultado`);
-                totalErrores++;
-                continue;
-            }
+            log('  ✅', `Poceada - Cabeza: ${resultadoPoceada.cabeza}`);
             
             // Guardar en DB
             const guardado = await guardarResultadoPoceada(resultadoPoceada);
