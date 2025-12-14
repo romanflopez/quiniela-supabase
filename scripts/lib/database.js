@@ -50,15 +50,16 @@ export async function guardarResultado(resultado) {
     try {
         await sql`
             INSERT INTO quiniela_resultados 
-                (jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza)
+                (jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza)
             VALUES 
                 (${resultado.jurisdiccion}, ${resultado.sorteo_id}, ${resultado.fecha}, ${resultado.turno}, 
                  ${resultado.numeros}, ${resultado.letras}, ${resultado.cabeza})
-            ON CONFLICT (jurisdiccion, fecha, turno) 
+            ON CONFLICT (jurisdiccion, sorteo_id) 
             DO UPDATE SET
-                id_sorteo = EXCLUDED.id_sorteo,
-                numeros_oficiales = EXCLUDED.numeros_oficiales,
-                letras_oficiales = EXCLUDED.letras_oficiales,
+                fecha = EXCLUDED.fecha,
+                turno = EXCLUDED.turno,
+                numeros = EXCLUDED.numeros,
+                letras = EXCLUDED.letras,
                 cabeza = EXCLUDED.cabeza
         `;
         

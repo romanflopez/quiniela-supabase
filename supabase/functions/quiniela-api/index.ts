@@ -34,11 +34,11 @@ const TURNOS_VALIDOS: string[] = ['La Previa', 'Primera', 'Matutina', 'Vespertin
 interface QuinielaData {
   id: number;
   jurisdiccion: string;
-  id_sorteo: number;
+  sorteo_id: string;
   fecha: string;
   turno: string;
-  numeros_oficiales: string[];
-  letras_oficiales: string[] | null;
+  numeros: string[];
+  letras: string[] | null;
   cabeza: string | null;
   created_at: string;
 }
@@ -73,11 +73,11 @@ serve(async (req) => {
         if (sorteoId) {
             dbQuery = db`
                 select 
-                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                 from 
                     quiniela_resultados
                 where
-                    id_sorteo = ${sorteoId}
+                    sorteo_id = ${sorteoId}
                 order by 
                     jurisdiccion asc;
             `;
@@ -91,7 +91,7 @@ serve(async (req) => {
             
             dbQuery = db`
                 select 
-                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                 from 
                     quiniela_resultados
                 where
@@ -107,7 +107,7 @@ serve(async (req) => {
         else if (fecha) {
             dbQuery = db`
                 select 
-                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                 from 
                     quiniela_resultados
                 where
@@ -122,7 +122,7 @@ serve(async (req) => {
         else if (fechaDesde && fechaHasta) {
             dbQuery = db`
                 select 
-                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                 from 
                     quiniela_resultados
                 where
@@ -144,7 +144,7 @@ serve(async (req) => {
                 
                 dbQuery = db`
                     select 
-                        id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                        id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                     from 
                         quiniela_resultados
                     where
@@ -169,7 +169,7 @@ serve(async (req) => {
         else {
             dbQuery = db`
                 select 
-                    id, jurisdiccion, id_sorteo, fecha, turno, numeros_oficiales, letras_oficiales, cabeza, created_at
+                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
                 from 
                     quiniela_resultados
                 order by 
