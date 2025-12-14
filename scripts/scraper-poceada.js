@@ -43,8 +43,7 @@ async function main() {
         // 2. Obtener sorteo de Quiniela Ciudad del mismo día (último turno = Nocturna)
         log('📋', `Obteniendo sorteo de Quiniela Ciudad (Nocturna) para fecha ${fechaPoceada}...`);
         
-        // Importar función para obtener sorteos de Quiniela
-        const { obtenerSorteosDisponibles: obtenerSorteosQuiniela } = await import('./lib/lotba-api.js');
+        // Usar función ya importada al inicio del archivo
         const sorteosQuiniela = await obtenerSorteosQuiniela();
         const sorteoQuiniela = sorteosQuiniela.find(s => s.fecha === fechaPoceada && (s.id.endsWith('5') || s.id.endsWith('0')));
         
@@ -66,7 +65,7 @@ async function main() {
             metrics.registrarIntento();
             const inicio = Date.now();
             
-            resultadoQuiniela = await scrapearSorteo('Ciudad', quinielaSorteoId, fecha);
+            resultadoQuiniela = await scrapearSorteo('Ciudad', quinielaSorteoId, fechaPoceada);
             
             const tiempo = Date.now() - inicio;
             
