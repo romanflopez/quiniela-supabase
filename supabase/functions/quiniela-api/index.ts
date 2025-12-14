@@ -52,9 +52,29 @@ serve(async (req) => {
     // 1. Obtener la conexión a la DB
     const DATABASE_URL = Deno.env.get('DATABASE_URL');
     if (!DATABASE_URL) {
-        return new Response(JSON.stringify({ error: "Falta DATABASE_URL." }), { status: 500 });
+        console.error("❌ DATABASE_URL no configurado en Supabase Edge Function");
+        return new Response(JSON.stringify({ 
+            error: "Falta DATABASE_URL.",
+            hint: "Configura DATABASE_URL como secret en Supabase Dashboard: Settings > Edge Functions > Secrets"
+        }), { 
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
     }
-    const db = sql(DATABASE_URL, { max: 1, connect_timeout: 10 });
+    
+    let db;
+    try {
+        db = sql(DATABASE_URL, { max: 1, connect_timeout: 10 });
+    } catch (error) {
+        console.error("❌ Error creando conexión SQL:", error);
+        return new Response(JSON.stringify({ 
+            error: "Error de conexión a la base de datos.",
+            details: error instanceof Error ? error.message : String(error)
+        }), { 
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
     
     // 2. Obtener parámetros de la URL
     const url = new URL(req.url);
@@ -65,6 +85,8 @@ serve(async (req) => {
     const fechaHasta = url.searchParams.get('fecha_hasta');
     const jurisdiccionFilter = url.searchParams.get('jurisdiccion')?.toLowerCase();
     const juego = url.searchParams.get('juego')?.toLowerCase(); // 'quiniela' o 'poceada'
+    
+    console.log(`📥 Request: juego=${juego}, sorteoId=${sorteoId}, fecha=${fecha}, turno=${turno}`);
     
     let dbQuery;
     let queryDescription = 'all';
@@ -288,6 +310,8 @@ serve(async (req) => {
         }
         
         const data: QuinielaData[] = await dbQuery;
+        
+        console.log(`✅ Query ejecutada: ${queryDescription}, resultados: ${data.length}`);
 
         // 4. Devolver la respuesta como JSON
         return new Response(JSON.stringify({
@@ -304,15 +328,24 @@ serve(async (req) => {
         });
 
     } catch (error) {
-        console.error("Error al consultar la DB:", error);
+        console.error("❌ Error al consultar la DB:", error);
+        console.error("Stack:", error instanceof Error ? error.stack : 'N/A');
         return new Response(JSON.stringify({ 
             error: "Fallo en la consulta a la base de datos.", 
-            details: error instanceof Error ? error.message : String(error)
+            details: error instanceof Error ? error.message : String(error),
+            query: queryDescription
         }), {
             status: 500,
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
         });
     } finally {
-        await db.end();
+        try {
+            await db.end();
+        } catch (e) {
+            console.error("Error cerrando conexión:", e);
+        }
     }
 });
