@@ -4,7 +4,7 @@
 
 import { fetchResultadoHTML, extraerResultados } from './lotba-api.js';
 import { sleep, getTurnoFromId, log } from './utils.js';
-import { JURISDICCIONES, VALIDACIONES, FEATURES } from '../config.js';
+import { JURISDICCIONES, VALIDACIONES, FEATURES, DELAYS } from '../config.js';
 
 // Usar configuración central
 export { JURISDICCIONES };
@@ -53,34 +53,46 @@ export async function scrapearSorteo(jurisdiccion, sorteoId, fecha = null) {
 }
 
 /**
- * Scrapear TODAS las jurisdicciones para 1 sorteo
+ * Scrapear TODAS las jurisdicciones para 1 sorteo (optimizado con paralelismo controlado)
  * @param {string} sorteoId - ID del sorteo
  * @param {string} fecha - Fecha YYYY-MM-DD
- * @param {number} delayMs - Delay entre jurisdicciones (default 3000ms)
+ * @param {number} delayMs - Delay entre jurisdicciones (default desde config)
+ * @param {number} maxConcurrent - Máximo de requests concurrentes (default 2)
  * @returns {Array} Array de resultados
  */
-export async function scrapearTodasJurisdicciones(sorteoId, fecha, delayMs = 3000) {
+export async function scrapearTodasJurisdicciones(sorteoId, fecha, delayMs = null, maxConcurrent = 2) {
+    const delay = delayMs ?? DELAYS.ENTRE_JURISDICCIONES;
     log('🔍', `Scrapeando sorteo ${sorteoId} (${fecha}) de todas las jurisdicciones...`);
     
+    const jurisdicciones = Object.entries(JURISDICCIONES);
     const resultados = [];
     
-    for (const [nombre, codigo] of Object.entries(JURISDICCIONES)) {
-        const resultado = await scrapearSorteo(nombre, sorteoId, fecha);
+    // Procesar en lotes con límite de concurrencia
+    for (let i = 0; i < jurisdicciones.length; i += maxConcurrent) {
+        const lote = jurisdicciones.slice(i, i + maxConcurrent);
         
-        if (resultado) {
-            resultados.push(resultado);
-            log('✅', `${nombre} - Sorteo ${sorteoId} - Cabeza: ${resultado.cabeza}`);
-        } else {
-            log('⚠️', `${nombre} - Sin datos para sorteo ${sorteoId}`);
-        }
+        // Procesar lote en paralelo
+        const promesas = lote.map(async ([nombre, codigo]) => {
+            const resultado = await scrapearSorteo(nombre, sorteoId, fecha);
+            if (resultado) {
+                resultados.push(resultado);
+                log('✅', `${nombre} - Sorteo ${sorteoId} - Cabeza: ${resultado.cabeza}`);
+            } else {
+                log('⚠️', `${nombre} - Sin datos para sorteo ${sorteoId}`);
+            }
+            return resultado;
+        });
         
-        // Delay entre jurisdicciones para no ser baneados
-        if (delayMs > 0) {
-            await sleep(delayMs);
+        // Esperar a que termine el lote
+        await Promise.all(promesas);
+        
+        // Delay entre lotes (excepto en el último)
+        if (i + maxConcurrent < jurisdicciones.length && delay > 0) {
+            await sleep(delay);
         }
     }
     
-    log('📊', `Resultados obtenidos: ${resultados.length}/${Object.keys(JURISDICCIONES).length}`);
+    log('📊', `Resultados obtenidos: ${resultados.length}/${jurisdicciones.length}`);
     return resultados;
 }
 

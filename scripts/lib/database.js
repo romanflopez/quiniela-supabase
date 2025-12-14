@@ -87,12 +87,81 @@ export async function guardarResultado(resultado) {
 }
 
 /**
- * Guardar múltiples resultados (batch)
+ * Guardar múltiples resultados (batch optimizado)
  * @param {Array} resultados - Array de objetos resultado
  */
 export async function guardarResultados(resultados) {
-    log('💾', `Guardando ${resultados.length} resultados en DB...`);
+    if (resultados.length === 0) {
+        return { guardados: 0, errores: 0 };
+    }
     
+    log('💾', `Guardando ${resultados.length} resultados en DB (batch optimizado)...`);
+    
+    const sql = initDB();
+    let guardados = 0;
+    let errores = 0;
+    
+    try {
+        // Usar transacción para mejor performance y atomicidad
+        await sql.begin(async sql => {
+            for (const resultado of resultados) {
+                try {
+                    // Verificar si existe
+                    const existe = await sql`
+                        SELECT id 
+                        FROM quiniela_resultados 
+                        WHERE jurisdiccion = ${resultado.jurisdiccion} 
+                        AND sorteo_id = ${resultado.sorteo_id}
+                        LIMIT 1
+                    `;
+                    
+                    if (existe.length > 0) {
+                        // Actualizar
+                        await sql`
+                            UPDATE quiniela_resultados 
+                            SET 
+                                fecha = ${resultado.fecha},
+                                turno = ${resultado.turno},
+                                numeros = ${resultado.numeros},
+                                letras = ${resultado.letras},
+                                cabeza = ${resultado.cabeza}
+                            WHERE jurisdiccion = ${resultado.jurisdiccion}
+                            AND sorteo_id = ${resultado.sorteo_id}
+                        `;
+                    } else {
+                        // Insertar
+                        await sql`
+                            INSERT INTO quiniela_resultados 
+                                (jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza)
+                            VALUES 
+                                (${resultado.jurisdiccion}, ${resultado.sorteo_id}, ${resultado.fecha}, ${resultado.turno}, 
+                                 ${resultado.numeros}, ${resultado.letras}, ${resultado.cabeza})
+                        `;
+                    }
+                    guardados++;
+                } catch (error) {
+                    errores++;
+                    log('❌', `Error guardando ${resultado.jurisdiccion}: ${error.message}`);
+                }
+            }
+        });
+        
+        log('✅', `Guardados: ${guardados} | Errores: ${errores}`);
+        return { guardados, errores };
+        
+    } catch (error) {
+        log('❌', `Error en batch guardado: ${error.message}`);
+        // Fallback a método secuencial si falla la transacción
+        return await guardarResultadosSecuencial(resultados);
+    }
+}
+
+/**
+ * Guardar múltiples resultados secuencialmente (fallback)
+ * @param {Array} resultados - Array de objetos resultado
+ */
+async function guardarResultadosSecuencial(resultados) {
+    log('⚠️', 'Usando método secuencial (fallback)...');
     let guardados = 0;
     let errores = 0;
     
@@ -105,7 +174,6 @@ export async function guardarResultados(resultados) {
         }
     }
     
-    log('✅', `Guardados: ${guardados} | Errores: ${errores}`);
     return { guardados, errores };
 }
 

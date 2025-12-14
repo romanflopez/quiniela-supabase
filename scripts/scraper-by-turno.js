@@ -38,11 +38,12 @@ async function main() {
         const fecha = getTodayDateArg();
         log('✅', `Sorteo ID: ${sorteoId} - Fecha: ${fecha}`);
         
-        // 2. Scrapear con retry
+        // 2. Scrapear con retry (usando configuración central)
+        const { RETRY_STRATEGY, DELAYS } = await import('./config.js');
         const resultados = await scrapearConRetry(sorteoId, fecha, {
-            maxIntentos: 20,           // 20 intentos
-            delayEntreIntentos: 10000, // 10s entre intentos completos
-            delayEntreJur: 3000        // 3s entre jurisdicciones
+            maxIntentos: RETRY_STRATEGY.MAX_INTENTOS,
+            delayEntreIntentos: RETRY_STRATEGY.DELAY,
+            delayEntreJur: DELAYS.ENTRE_JURISDICCIONES
         });
         
         // 3. Guardar en DB

@@ -4,17 +4,27 @@
 
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import { convertDateFormat, log } from './utils.js';
+import { convertDateFormat, log, getTurnoFromId, getTodayDateArg } from './utils.js';
 
 const LOTBA_PAGE_URL = 'https://quiniela.loteriadelaciudad.gob.ar/';
 const LOTBA_API_URL = 'https://quiniela.loteriadelaciudad.gob.ar/resultadosQuiniela/consultaResultados.php';
 const CODIGO_FIJO = '0080';
 
+// Cache de sorteos (se invalida después de 5 minutos)
+let sorteosCache = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
 /**
- * Obtener lista de sorteos disponibles desde la página principal
+ * Obtener lista de sorteos disponibles desde la página principal (con cache)
  * @returns {Array} Array de {id, fecha, turno}
  */
 export async function obtenerSorteosDisponibles() {
+    // Usar cache si está disponible y no expiró
+    const now = Date.now();
+    if (sorteosCache && (now - cacheTimestamp) < CACHE_TTL) {
+        return sorteosCache;
+    }
     try {
         log('🌐', `Obteniendo sorteos desde ${LOTBA_PAGE_URL}`);
         
@@ -47,6 +57,11 @@ export async function obtenerSorteosDisponibles() {
         });
         
         log('✅', `${sorteos.length} sorteos disponibles encontrados`);
+        
+        // Guardar en cache
+        sorteosCache = sorteos;
+        cacheTimestamp = Date.now();
+        
         return sorteos;
         
     } catch (error) {
@@ -56,13 +71,21 @@ export async function obtenerSorteosDisponibles() {
 }
 
 /**
+ * Invalidar cache de sorteos (útil para testing o cuando se necesita forzar refresh)
+ */
+export function invalidarCacheSorteos() {
+    sorteosCache = null;
+    cacheTimestamp = 0;
+}
+
+/**
  * Obtener ID de sorteo de hoy para un turno específico
  * @param {string} turno - 'la-previa', 'primera', 'matutina', 'vespertina', 'nocturna'
  * @returns {string|null} ID del sorteo
  */
 export async function obtenerSorteoIdDeHoy(turno) {
     const sorteos = await obtenerSorteosDisponibles();
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getTodayDateArg(); // Usa zona horaria Argentina
     
     // Mapear turno a último dígito esperado
     const turnoMap = {
@@ -160,17 +183,5 @@ export function extraerResultados(html) {
     });
     
     return { numeros, letras };
-}
-
-function getTurnoFromId(sorteoId) {
-    const last = sorteoId.charAt(sorteoId.length - 1);
-    const map = {
-        '1': 'La Previa', '6': 'La Previa',
-        '2': 'Primera', '7': 'Primera',
-        '3': 'Matutina', '8': 'Matutina',
-        '4': 'Vespertina', '9': 'Vespertina',
-        '5': 'Nocturna', '0': 'Nocturna'
-    };
-    return map[last] || 'Desconocido';
 }
 
