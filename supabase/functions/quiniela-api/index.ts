@@ -28,9 +28,6 @@ const JURISDICCION_MAP: Record<string, string> = {
     'entrerios': 'EntreRios'
 };
 
-// Turnos válidos
-const TURNOS_VALIDOS: string[] = ['La Previa', 'Primera', 'Matutina', 'Vespertina', 'Nocturna'];
-
 // ----------------------------------------------------------------------
 // TIPOS
 // ----------------------------------------------------------------------
@@ -88,22 +85,45 @@ serve(async (req) => {
             queryDescription = `sorteo_id=${sorteoId}`;
         }
         
-        // CASO 2: Consulta por fecha + turno (todas las jurisdicciones)
+        // CASO 2: Consulta por fecha + turno (todas las jurisdicciones o Poceada)
         else if (fecha && turno) {
             // Capitalizar turno
             const turnoCapitalized = turno.charAt(0).toUpperCase() + turno.slice(1).toLowerCase();
             
-            dbQuery = db`
-                select 
-                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
-                from 
-                    quiniela_resultados
-                where
-                    fecha = ${fecha}
-                    AND turno = ${turnoCapitalized}
-                order by 
-                    jurisdiccion asc;
-            `;
+            // Si es Poceada, buscar en tabla poceada
+            if (turnoCapitalized === 'Poceada') {
+                dbQuery = db`
+                    select 
+                        id, 
+                        'Ciudad' as jurisdiccion, 
+                        sorteo_id, 
+                        fecha, 
+                        turno, 
+                        numeros, 
+                        letras, 
+                        cabeza, 
+                        created_at
+                    from 
+                        poceada_resultados
+                    where
+                        fecha = ${fecha}
+                        AND turno = ${turnoCapitalized}
+                    order by 
+                        created_at desc;
+                `;
+            } else {
+                dbQuery = db`
+                    select 
+                        id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
+                    from 
+                        quiniela_resultados
+                    where
+                        fecha = ${fecha}
+                        AND turno = ${turnoCapitalized}
+                    order by 
+                        jurisdiccion asc;
+                `;
+            }
             queryDescription = `fecha=${fecha}&turno=${turnoCapitalized}`;
         }
         
@@ -169,13 +189,45 @@ serve(async (req) => {
             }
         }
         
-        // CASO 6: Sin filtros - últimos 80 resultados
+        // CASO 6: Sin filtros - últimos 80 resultados (Quiniela + Poceada)
         else {
+            // Unir resultados de quiniela y poceada
             dbQuery = db`
-                select 
-                    id, jurisdiccion, sorteo_id, fecha, turno, numeros, letras, cabeza, created_at
-                from 
-                    quiniela_resultados
+                (
+                    select 
+                        id, 
+                        COALESCE(jurisdiccion, 'Ciudad') as jurisdiccion, 
+                        sorteo_id, 
+                        fecha, 
+                        turno, 
+                        numeros, 
+                        letras, 
+                        cabeza, 
+                        created_at
+                    from 
+                        quiniela_resultados
+                    order by 
+                        fecha desc, turno desc, created_at desc
+                    limit 70
+                )
+                UNION ALL
+                (
+                    select 
+                        id, 
+                        'Ciudad' as jurisdiccion, 
+                        sorteo_id, 
+                        fecha, 
+                        turno, 
+                        numeros, 
+                        letras, 
+                        cabeza, 
+                        created_at
+                    from 
+                        poceada_resultados
+                    order by 
+                        fecha desc, created_at desc
+                    limit 10
+                )
                 order by 
                     fecha desc, turno desc, created_at desc
                 limit 80;
