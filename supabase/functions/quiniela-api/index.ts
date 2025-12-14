@@ -64,6 +64,7 @@ serve(async (req) => {
     const fechaDesde = url.searchParams.get('fecha_desde');
     const fechaHasta = url.searchParams.get('fecha_hasta');
     const jurisdiccionFilter = url.searchParams.get('jurisdiccion')?.toLowerCase();
+    const juego = url.searchParams.get('juego')?.toLowerCase(); // 'quiniela' o 'poceada'
     
     let dbQuery;
     let queryDescription = 'all';
@@ -189,14 +190,14 @@ serve(async (req) => {
             }
         }
         
-        // CASO 6: Sin filtros - últimos 80 resultados (Quiniela + Poceada)
+        // CASO 6: Sin filtros - Filtrar por juego o traer ambos
         else {
-            // Unir resultados de quiniela y poceada
-            dbQuery = db`
-                (
+            if (juego === 'quiniela') {
+                // Solo Quiniela
+                dbQuery = db`
                     select 
                         id, 
-                        COALESCE(jurisdiccion, 'Ciudad') as jurisdiccion, 
+                        jurisdiccion, 
                         sorteo_id, 
                         fecha, 
                         turno, 
@@ -208,10 +209,12 @@ serve(async (req) => {
                         quiniela_resultados
                     order by 
                         fecha desc, turno desc, created_at desc
-                    limit 70
-                )
-                UNION ALL
-                (
+                    limit 50;
+                `;
+                queryDescription = 'juego=quiniela';
+            } else if (juego === 'poceada') {
+                // Solo Poceada
+                dbQuery = db`
                     select 
                         id, 
                         'Ciudad' as jurisdiccion, 
@@ -226,22 +229,62 @@ serve(async (req) => {
                         poceada_resultados
                     order by 
                         fecha desc, created_at desc
-                    limit 10
-                )
-                order by 
-                    fecha desc, 
-                    CASE turno 
-                        WHEN 'Nocturna' THEN 1
-                        WHEN 'Vespertina' THEN 2
-                        WHEN 'Matutina' THEN 3
-                        WHEN 'Primera' THEN 4
-                        WHEN 'La Previa' THEN 5
-                        WHEN 'Poceada' THEN 6
-                        ELSE 7
-                    END,
-                    created_at desc
-                limit 80;
-            `;
+                    limit 30;
+                `;
+                queryDescription = 'juego=poceada';
+            } else {
+                // Ambos (comportamiento por defecto)
+                dbQuery = db`
+                    (
+                        select 
+                            id, 
+                            jurisdiccion, 
+                            sorteo_id, 
+                            fecha, 
+                            turno, 
+                            numeros, 
+                            letras, 
+                            cabeza, 
+                            created_at
+                        from 
+                            quiniela_resultados
+                        order by 
+                            fecha desc, turno desc, created_at desc
+                        limit 70
+                    )
+                    UNION ALL
+                    (
+                        select 
+                            id, 
+                            'Ciudad' as jurisdiccion, 
+                            sorteo_id, 
+                            fecha, 
+                            turno, 
+                            numeros, 
+                            letras, 
+                            cabeza, 
+                            created_at
+                        from 
+                            poceada_resultados
+                        order by 
+                            fecha desc, created_at desc
+                        limit 10
+                    )
+                    order by 
+                        fecha desc, 
+                        CASE turno 
+                            WHEN 'Nocturna' THEN 1
+                            WHEN 'Vespertina' THEN 2
+                            WHEN 'Matutina' THEN 3
+                            WHEN 'Primera' THEN 4
+                            WHEN 'La Previa' THEN 5
+                            WHEN 'Poceada' THEN 6
+                            ELSE 7
+                        END,
+                        created_at desc
+                    limit 80;
+                `;
+            }
         }
         
         const data: QuinielaData[] = await dbQuery;

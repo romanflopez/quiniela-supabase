@@ -390,6 +390,63 @@
         .skip-link:focus {
             top: 0;
         }
+
+        /* ═══════════════════════════════════════════════════════════════
+           TABS - Solapas para Quiniela y Poceada
+           ═══════════════════════════════════════════════════════════════ */
+        .tabs-container {
+            background: #111111;
+            padding: 0;
+            margin: 0 20px 30px 20px;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0;
+            background: #000000;
+            border-bottom: 3px solid #FFFF00;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            background: #1a1a1a;
+            color: #FFFFFF;
+            border: none;
+            border-right: 2px solid #333333;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:last-child {
+            border-right: none;
+        }
+
+        .tab-button:hover {
+            background: #2a2a2a;
+        }
+
+        .tab-button.active {
+            background: #FFFF00;
+            color: #000000;
+            border-bottom: 4px solid #FFFF00;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -404,9 +461,23 @@
     </header>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         FILTROS
+         TABS - Solapas para Quiniela y Poceada
          ═══════════════════════════════════════════════════════════════ -->
-    <section class="filtros-container" role="search" aria-label="Filtros de búsqueda">
+    <section class="tabs-container" role="tablist" aria-label="Seleccionar juego">
+        <div class="tabs-header">
+            <button id="tab-quiniela" class="tab-button active" role="tab" aria-selected="true" aria-controls="quiniela-content">
+                🎰 QUINIELA
+            </button>
+            <button id="tab-poceada" class="tab-button" role="tab" aria-selected="false" aria-controls="poceada-content">
+                🎯 POCEADA
+            </button>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FILTROS - Solo para Quiniela
+         ═══════════════════════════════════════════════════════════════ -->
+    <section id="filtros-quiniela" class="filtros-container" role="search" aria-label="Filtros de búsqueda">
         <label for="filtro-jurisdiccion" class="filtro-label">
             🔍 Filtrar por Jurisdicción:
         </label>
@@ -443,6 +514,27 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════
+         FILTROS - Solo para Poceada (oculto por defecto)
+         ═══════════════════════════════════════════════════════════════ -->
+    <section id="filtros-poceada" class="filtros-container" role="search" aria-label="Filtros de búsqueda" style="display: none;">
+        <label for="filtro-turno-poceada" class="filtro-label">
+            🕐 Filtrar por Fecha:
+        </label>
+        <select id="filtro-turno-poceada" class="filtro-select" aria-label="Seleccionar turno">
+            <option value="all">TODAS LAS FECHAS</option>
+        </select>
+
+        <div class="btn-group">
+            <button id="btn-actualizar-poceada" class="btn btn-actualizar" aria-label="Actualizar resultados">
+                ♻️ ACTUALIZAR
+            </button>
+            <button id="btn-limpiar-poceada" class="btn btn-limpiar" aria-label="Limpiar filtros">
+                🗑️ LIMPIAR
+            </button>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
          ESTADÍSTICAS
          ═══════════════════════════════════════════════════════════════ -->
     <section class="stats" role="status" aria-live="polite">
@@ -455,9 +547,21 @@
          RESULTADOS
          ═══════════════════════════════════════════════════════════════ -->
     <main id="main-content" role="main">
-        <div id="sorteos-container" class="sorteos-container">
-            <div class="loading" role="status" aria-live="polite">
-                ⏳ CARGANDO RESULTADOS...
+        <!-- Contenido Quiniela -->
+        <div id="quiniela-content" class="tab-content active">
+            <div id="sorteos-container" class="sorteos-container">
+                <div class="loading" role="status" aria-live="polite">
+                    ⏳ CARGANDO RESULTADOS...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido Poceada -->
+        <div id="poceada-content" class="tab-content">
+            <div id="sorteos-container-poceada" class="sorteos-container">
+                <div class="loading" role="status" aria-live="polite">
+                    ⏳ CARGANDO RESULTADOS...
+                </div>
             </div>
         </div>
     </main>
@@ -470,25 +574,76 @@
         const API_URL = 'https://pvbxvghzemtymbynkiqa.supabase.co/functions/v1/quiniela-api';
         
         // Referencias DOM
+        const tabQuiniela = document.getElementById('tab-quiniela');
+        const tabPoceada = document.getElementById('tab-poceada');
+        const quinielaContent = document.getElementById('quiniela-content');
+        const poceadaContent = document.getElementById('poceada-content');
+        const filtrosQuiniela = document.getElementById('filtros-quiniela');
+        const filtrosPoceada = document.getElementById('filtros-poceada');
+        
         const sorteosContainer = document.getElementById('sorteos-container');
+        const sorteosContainerPoceada = document.getElementById('sorteos-container-poceada');
         const statsText = document.getElementById('stats-text');
         const filtroJurisdiccion = document.getElementById('filtro-jurisdiccion');
         const filtroTurno = document.getElementById('filtro-turno');
         const btnActualizar = document.getElementById('btn-actualizar');
         const btnLimpiar = document.getElementById('btn-limpiar');
+        const btnActualizarPoceada = document.getElementById('btn-actualizar-poceada');
+        const btnLimpiarPoceada = document.getElementById('btn-limpiar-poceada');
 
         // Estado de la aplicación
         let todosLosSorteos = [];
+        let todosLosSorteosPoceada = [];
+        let juegoActual = 'quiniela'; // 'quiniela' o 'poceada'
 
         // ═══════════════════════════════════════════════════════════════
-        // FUNCIÓN: Cargar datos desde la API
+        // FUNCIÓN: Cambiar de tab
         // ═══════════════════════════════════════════════════════════════
-        async function cargarDatos() {
+        function cambiarTab(juego) {
+            juegoActual = juego;
+            
+            // Actualizar tabs
+            if (juego === 'quiniela') {
+                tabQuiniela.classList.add('active');
+                tabQuiniela.setAttribute('aria-selected', 'true');
+                tabPoceada.classList.remove('active');
+                tabPoceada.setAttribute('aria-selected', 'false');
+                
+                quinielaContent.classList.add('active');
+                poceadaContent.classList.remove('active');
+                
+                filtrosQuiniela.style.display = 'block';
+                filtrosPoceada.style.display = 'none';
+                
+                // Cargar datos de Quiniela
+                cargarDatosQuiniela();
+            } else {
+                tabPoceada.classList.add('active');
+                tabPoceada.setAttribute('aria-selected', 'true');
+                tabQuiniela.classList.remove('active');
+                tabQuiniela.setAttribute('aria-selected', 'false');
+                
+                poceadaContent.classList.add('active');
+                quinielaContent.classList.remove('active');
+                
+                filtrosPoceada.style.display = 'block';
+                filtrosQuiniela.style.display = 'none';
+                
+                // Cargar datos de Poceada
+                cargarDatosPoceada();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Cargar datos de Quiniela desde la API
+        // ═══════════════════════════════════════════════════════════════
+        async function cargarDatosQuiniela() {
             try {
                 sorteosContainer.innerHTML = '<div class="loading" role="status">⏳ CARGANDO RESULTADOS...</div>';
                 statsText.textContent = 'Conectando con el servidor...';
 
-                const response = await fetch(API_URL);
+                // Solo traer Quiniela (excluir Poceada)
+                const response = await fetch(`${API_URL}?juego=quiniela`);
                 
                 if (!response.ok) {
                     throw new Error(`Error HTTP: ${response.status}`);
@@ -499,13 +654,51 @@
                 if (data.status === 'ok' && data.results) {
                     todosLosSorteos = data.results;
                     actualizarEstadisticas(data.total_results);
-                    renderizarSorteos(todosLosSorteos);
+                    renderizarSorteos(todosLosSorteos, sorteosContainer);
                 } else {
                     throw new Error('Formato de datos inválido');
                 }
             } catch (error) {
                 console.error('Error cargando datos:', error);
                 sorteosContainer.innerHTML = `
+                    <div class="error" role="alert">
+                        ❌ ERROR AL CARGAR RESULTADOS<br>
+                        <span style="font-size: 18px; font-weight: 400;">
+                            Por favor, intente nuevamente más tarde.
+                        </span>
+                    </div>
+                `;
+                statsText.textContent = '❌ Error de conexión';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FUNCIÓN: Cargar datos de Poceada desde la API
+        // ═══════════════════════════════════════════════════════════════
+        async function cargarDatosPoceada() {
+            try {
+                sorteosContainerPoceada.innerHTML = '<div class="loading" role="status">⏳ CARGANDO RESULTADOS...</div>';
+                statsText.textContent = 'Conectando con el servidor...';
+
+                // Solo traer Poceada
+                const response = await fetch(`${API_URL}?juego=poceada`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.results) {
+                    todosLosSorteosPoceada = data.results;
+                    actualizarEstadisticas(data.total_results);
+                    renderizarSorteos(todosLosSorteosPoceada, sorteosContainerPoceada);
+                } else {
+                    throw new Error('Formato de datos inválido');
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                sorteosContainerPoceada.innerHTML = `
                     <div class="error" role="alert">
                         ❌ ERROR AL CARGAR RESULTADOS<br>
                         <span style="font-size: 18px; font-weight: 400;">
@@ -538,9 +731,9 @@
         // ═══════════════════════════════════════════════════════════════
         // FUNCIÓN: Renderizar sorteos
         // ═══════════════════════════════════════════════════════════════
-        function renderizarSorteos(sorteos) {
+        function renderizarSorteos(sorteos, container = sorteosContainer) {
             if (!sorteos || sorteos.length === 0) {
-                sorteosContainer.innerHTML = `
+                container.innerHTML = `
                     <div class="empty-state" role="status">
                         🔍 NO SE ENCONTRARON RESULTADOS<br>
                         <span style="font-size: 18px;">
@@ -560,7 +753,7 @@
             });
 
             const html = sorteosOrdenados.map(sorteo => crearTarjetaSorteo(sorteo)).join('');
-            sorteosContainer.innerHTML = html;
+            container.innerHTML = html;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -640,7 +833,9 @@
             const jurisdiccionSeleccionada = filtroJurisdiccion.value;
             const turnoSeleccionado = filtroTurno.value;
 
-            let sorteosFiltrados = todosLosSorteos;
+            const sorteos = juegoActual === 'quiniela' ? todosLosSorteos : todosLosSorteosPoceada;
+            const container = juegoActual === 'quiniela' ? sorteosContainer : sorteosContainerPoceada;
+            let sorteosFiltrados = sorteos;
 
             if (jurisdiccionSeleccionada !== 'all') {
                 sorteosFiltrados = sorteosFiltrados.filter(
@@ -654,7 +849,7 @@
                 );
             }
 
-            renderizarSorteos(sorteosFiltrados);
+            renderizarSorteos(sorteosFiltrados, container);
             
             // Anunciar cambio para lectores de pantalla
             const mensaje = `Mostrando ${sorteosFiltrados.length} resultados`;
@@ -668,37 +863,56 @@
         // FUNCIÓN: Limpiar filtros
         // ═══════════════════════════════════════════════════════════════
         function limpiarFiltros() {
-            filtroJurisdiccion.value = 'all';
-            filtroTurno.value = 'all';
-            renderizarSorteos(todosLosSorteos);
-            actualizarEstadisticas(todosLosSorteos.length);
+            if (juegoActual === 'quiniela') {
+                filtroJurisdiccion.value = 'all';
+                filtroTurno.value = 'all';
+                renderizarSorteos(todosLosSorteos, sorteosContainer);
+                actualizarEstadisticas(todosLosSorteos.length);
+            } else {
+                // Para Poceada, recargar datos
+                cargarDatosPoceada();
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
         // EVENT LISTENERS
         // ═══════════════════════════════════════════════════════════════
         
-        // Filtros
+        // Tabs
+        tabQuiniela.addEventListener('click', () => cambiarTab('quiniela'));
+        tabPoceada.addEventListener('click', () => cambiarTab('poceada'));
+        
+        // Filtros Quiniela
         filtroJurisdiccion.addEventListener('change', aplicarFiltros);
         filtroTurno.addEventListener('change', aplicarFiltros);
 
-        // Botones
+        // Botones Quiniela
         btnActualizar.addEventListener('click', () => {
             limpiarFiltros();
-            cargarDatos();
+            cargarDatosQuiniela();
         });
         
         btnLimpiar.addEventListener('click', limpiarFiltros);
+
+        // Botones Poceada
+        btnActualizarPoceada.addEventListener('click', cargarDatosPoceada);
+        btnLimpiarPoceada.addEventListener('click', limpiarFiltros);
 
         // ═══════════════════════════════════════════════════════════════
         // INICIALIZACIÓN
         // ═══════════════════════════════════════════════════════════════
         
-        // Cargar datos al inicio
-        cargarDatos();
+        // Cargar datos de Quiniela al inicio
+        cargarDatosQuiniela();
 
         // Auto-refresh cada 2 minutos
-        setInterval(cargarDatos, 120000);
+        setInterval(() => {
+            if (juegoActual === 'quiniela') {
+                cargarDatosQuiniela();
+            } else {
+                cargarDatosPoceada();
+            }
+        }, 120000);
 
         // Anunciar para accesibilidad
         console.log('✅ Interfaz de accesibilidad AAA cargada correctamente');
